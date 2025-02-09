@@ -1,39 +1,77 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
+import { Stack } from "expo-router";
+import { StyleSheet } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import store from "@/stores/store";
+import {
+  useSQLiteContext,
+  type SQLiteDatabase,
+  SQLiteProvider,
+} from "expo-sqlite";
+import { Provider } from "react-redux";
+import "../global.css";
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
+        <SQLiteProvider databaseName="thiri-kotoba.db" onInit={migrateDb}>
+          <Provider store={store}>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="+not-found" />
+              <Stack.Screen name="details" options={{ headerShown: false }} />
+            </Stack>
+          </Provider>
+        </SQLiteProvider>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
+
+const migrateDb = async (db: SQLiteDatabase) => {
+  const DATABASE_VERSION = 1; // current schema version
+  let result = await db.getFirstAsync<{
+    user_version: number;
+  }>("PRAGMA user_version AS user_version");
+  const currentDbVersion = result?.user_version ?? 0;
+  if (currentDbVersion >= DATABASE_VERSION) {
+    return;
+  }
+
+  // Run migrations if needed
+  if (currentDbVersion === 0) {
+    // Initial migration
+    await db.execAsync(`CREATE TABLE word (
+      id INTEGER PRIMARY KEY NOT NULL AUTOINCREMENT,
+      word TEXT NOT NULL,
+      type TEXT NOT NULL,
+      category TEXT NOT NULL,
+      definition TEXT NOT NULL,
+      isFavorite INTEGER);
+    `);
+    await db.execAsync(`CREATE TABLE japanese(
+      id INTEGER PRIMARY KEY NOT NULL AUTOINCREMENT,
+      kanji TEXT,
+      hiragana TEXT,
+      romaji TEXT,
+      level: TEXT,
+      formality: TEXT,
+      synonyms: TEXT,
+      antonyms: TEXT,
+      word_id INTEGER,
+      FOREIGN KEY(word_id) REFERENCES ON word(id) ON CASCADES DELETE
+      );`)
+  }
+
+  // Increment the version after migration
+  await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  paragraph: {
+    fontSize: 22,
+    padding: 12,
+  },
+});

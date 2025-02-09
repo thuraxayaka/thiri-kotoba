@@ -1,0 +1,198 @@
+[
+  {
+    "id": 1098,
+    "word": "otona",
+    "type": "noun",
+    "category": "people",
+    "definition": "An adult or grown-up person.",
+    "english_proficiency_level": "CEFR A2",
+    "english_formality": "neutral",
+    "japanese": {
+      "kanji": "大人",
+      "hiragana": "おとな",
+      "romaji": "otona",
+      "level": "N5",
+      "formality": "neutral",
+      "synonyms": ["成人", "大人の人"],
+      "antonyms": ["子供", "少年"],
+      "examples": [
+        {
+          "sentence": "彼は大人(おとな)になりました。",
+          "romaji": "Kare wa otona ni narimashita.",
+          "translation": "He has become an adult."
+        },
+        {
+          "sentence": "大人(おとな)は責任を持たなければなりません。",
+          "romaji": "Otona wa sekinin o motanakereba narimasen.",
+          "translation": "Adults must take responsibility."
+        },
+        {
+          "sentence": "この映画は大人(おとな)向けです。",
+          "romaji": "Kono eiga wa otona muke desu.",
+          "translation": "This movie is for adults."
+        },
+        {
+          "sentence": "大人(おとな)になっても勉強は大切です。",
+          "romaji": "Otona ni nattemo benkyou wa taisetsu desu.",
+          "translation": "Studying is important even after becoming an adult."
+        },
+        {
+          "sentence": "大人(おとな)の世界は子供には難しいです。",
+          "romaji": "Otona no sekai wa kodomo ni wa muzukashii desu.",
+          "translation": "The adult world is difficult for children."
+        }
+      ]
+    },
+    "burmese": {
+      "translation": "လူကြီး"
+    },
+    "korean": {
+      "hangul": "어른",
+      "romaji": "eoreun",
+      "proficiency_level": "TOPIK 1",
+      "formality": "neutral",
+      "examples": [
+        {
+          "sentence": "그는 어른이 되었습니다.",
+          "romaji": "Geuneun eoreuni doeeotseumnida.",
+          "translation": "He has become an adult."
+        },
+        {
+          "sentence": "어른은 책임을 져야 합니다.",
+          "romaji": "Eoreun-eun chaegim-eul jyeoya hamnida.",
+          "translation": "Adults must take responsibility."
+        },
+        {
+          "sentence": "이 영화는 어른들을 위한 것입니다.",
+          "romaji": "I yeonghwaneun eoreundeul-eul wihan geosimnida.",
+          "translation": "This movie is for adults."
+        }
+      ]
+    },
+    "chinese": {
+      "hanzi": "大人",
+      "pinyin": "dàrén",
+      "pinyin_sm": "daren",
+      "level": "HSK 1",
+      "formality": "neutral",
+      "examples": [
+        {
+          "sentence": "他已经是大人了。",
+          "pinyin": "Tā yǐjīng shì dàrén le.",
+          "pinyin_sm": "Ta yijing shi daren le.",
+          "translation": "He is already an adult."
+        },
+        {
+          "sentence": "大人应该负责任。",
+          "pinyin": "Dàrén yīnggāi fùzérèn.",
+          "pinyin_sm": "Daren yinggai fuzeren.",
+          "translation": "Adults should take responsibility."
+        },
+        {
+          "sentence": "这个电影是给大人看的。",
+          "pinyin": "Zhège diànyǐng shì gěi dàrén kàn de.",
+          "pinyin_sm": "Zhege dianying shi gei daren kan de.",
+          "translation": "This movie is for adults."
+        }
+      ]
+    }
+  },
+  {
+    "id": 1099,
+    "word": "onaka",
+    "type": "noun",
+    "category": "body",
+    "definition": "The stomach or belly.",
+    "english_proficiency_level": "CEFR A1",
+    "english_formality": "neutral",
+    "japanese": {
+      "kanji": "お腹",
+      "hiragana": "おなか",
+      "romaji": "onaka",
+      "level": "N5",
+      "formality": "neutral",
+      "synonyms": ["胃", "腹部"],
+      "antonyms": [],
+      "examples": [
+        {
+          "sentence": "お腹(おなか)がすきました。",
+          "romaji": "Onaka ga sukimashita.",
+          "translation": "I am hungry."
+        },
+        {
+          "sentence": "お腹(おなか)が痛いです。",
+          "romaji": "Onaka ga itai desu.",
+          "translation": "My stomach hurts."
+        },
+        {
+          "sentence": "彼はお腹(おなか)をさすっていました。",
+          "romaji": "Kare wa onaka o sasutte imashita.",
+          "translation": "He was rubbing his stomach."
+        },
+        {
+          "sentence": "お腹(おなか)がいっぱいです。",
+          "romaji": "Onaka ga ippai desu.",
+          "translation": "I am full."
+        },
+        {
+          "sentence": "お腹(おなか)が空いたら食べましょう。",
+          "romaji": "Onaka ga suitara tabemashou.",
+          "translation": "Let's eat when we get hungry."
+        }
+      ]
+    },
+    "burmese": {
+      "translation": "ဗိုက်"
+    },
+    "korean": {
+      "hangul": "배",
+      "romaji": "bae",
+      "proficiency_level": "TOPIK 1",
+      "formality": "neutral",
+      "examples": [
+        {
+          "sentence": "배가 고파요.",
+          "romaji": "Bae-ga gopayo.",
+          "translation": "I am hungry."
+        },
+        {
+          "sentence": "배가 아파요.",
+          "romaji": "Bae-ga apayo.",
+          "translation": "My stomach hurts."
+        },
+        {
+          "sentence": "배를 문질렀어요.",
+          "romaji": "Bae-reul munjilleosseoyo.",
+          "translation": "I rubbed my stomach."
+        }
+      ]
+    },
+    "chinese": {
+      "hanzi": "肚子",
+      "pinyin": "dùzi",
+      "pinyin_sm": "duzi",
+      "level": "HSK 1",
+      "formality": "neutral",
+      "examples": [
+        {
+          "sentence": "我肚子饿了。",
+          "pinyin": "Wǒ dùzi è le.",
+          "pinyin_sm": "Wo duzi e le.",
+          "translation": "I am hungry."
+        },
+        {
+          "sentence": "我的肚子疼。",
+          "pinyin": "Wǒ de dùzi téng.",
+          "pinyin_sm": "Wo de duzi teng.",
+          "translation": "My stomach hurts."
+        },
+        {
+          "sentence": "他摸了摸肚子。",
+          "pinyin": "Tā mōle mō dùzi.",
+          "pinyin_sm": "Ta mole mo duzi.",
+          "translation": "He touched his stomach."
+        }
+      ]
+    }
+  }
+]

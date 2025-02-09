@@ -1,74 +1,99 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useEffect, useMemo, useState } from "react";
+import { Text, View, FlatList, StyleSheet } from "react-native";
+import { useDictionary, useInitializiedWords } from "@/hooks/Dictionary";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useNetwork } from "@/hooks/Network";
+import ListItem from "@/components/ListItem";
+import { useInitialized } from "@/hooks/Setup";
+import { Link, useNavigation } from "expo-router";
+import { useAppDispatch, useAppSelector } from "@/hooks/Hook";
+import { AppDispatch, RootState } from "@/stores/store";
+import { useDownloadData } from "@/hooks/DownloadData";
+import { setWords } from "@/stores/wordSlice";
+import { useTheme } from "@/hooks/Theme";
+import { StatusBar } from "expo-status-bar";
+import SearchBox from "@/components/SearchBox";
+import dummyData from "@/constants/dummy.json";
+import { useRouter } from "expo-router";
+import * as Speech from "expo-speech";
+export default function Index() {
+  const router = useRouter();
+  const theme = useTheme();
+  const [searchWord, setSearchWord] = useState<string | undefined>(undefined);
+  console.log(searchWord);
+  const styles = useMemo(() => {
+    return StyleSheet.create({
+      container: {
+        flex: 1,
+        backgroundColor: theme.primaryColor,
+        color: theme.secondaryColor,
+      },
+      statusBar: {
+        margin: 0,
+      },
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-
-export default function HomeScreen() {
+      card: {
+        width: 400,
+        height: 600,
+        backgroundColor: theme.accentColor,
+        color: theme.textColor,
+      },
+    });
+  }, [theme]);
+  const goToDetails = (id: number) => {
+    router.push(`/details/${id}`);
+  };
+  const sync = () => {};
+  const showHistory = () => {};
+  const preloadVoices = () => {
+    const languages = ["zh-CN", "ja-JP", "ko-KR"];
+    languages.forEach((language) => {
+      Speech.speak(" ", { language, pitch: 1.0 });
+    });
+  };
+  useEffect(() => {
+    preloadVoices();
+  }, []);
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <SafeAreaView
+      style={[styles.container]}
+      edges={["left", "bottom", "right"]}
+    >
+      <StatusBar backgroundColor={theme.primaryColor} />
+      <View>
+        <SearchBox
+          searchWord={searchWord}
+          setSearchWord={setSearchWord}
+          sync={sync}
+          showHistory={showHistory}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      </View>
+      <View className="mx-2">
+        <FlatList
+          ItemSeparatorComponent={() => {
+            return (
+              <View
+                style={{
+                  width: "100%",
+                  height: 2,
+                  backgroundColor: theme.secondaryColor,
+                }}
+              ></View>
+            );
+          }}
+          data={dummyData}
+          renderItem={({ item: item }) => (
+            <ListItem
+              id={item.id}
+              word={item.japanese.kanji}
+              phonetic={item.japanese.romaji}
+              translation={item.burmese.translation}
+              onPress={goToDetails}
+            />
+          )}
+          keyExtractor={(item) => item.id.toString()}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
