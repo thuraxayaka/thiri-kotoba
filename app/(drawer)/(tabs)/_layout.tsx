@@ -2,14 +2,20 @@ import { Tabs } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MateriralCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useTheme } from "@/hooks/Theme";
-import { Pressable } from "react-native";
+import { TouchableHighlight, View } from "react-native";
+import { setTabbarHeight } from "@/stores/settingSlice";
+import { AppDispatch } from "@/stores/store";
+import { useAppDispatch } from "@/hooks/Hook";
 
 export default function TabsLayout() {
+  const dispatch = useAppDispatch<AppDispatch>();
   const theme = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: theme.accentColor,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
           backgroundColor: theme.primaryColor,
           borderColor: theme.accentColor,
@@ -17,21 +23,19 @@ export default function TabsLayout() {
         headerStyle: {
           backgroundColor: theme.primaryColor,
         },
-        tabBarButton: (props) => {
+        tabBarButton: ({ children, onPress }) => {
           return (
-            <Pressable
-              {...props}
-              style={({ pressed }) => [
-                {
-                  justifyContent: "flex-end",
-                  alignItems: "flex-end",
-                  backgroundColor: pressed
-                    ? `${theme.secondaryColor}`
-                    : "transparent",
-                  borderRadius: 50,
-                },
-              ]}
-            />
+            <TouchableHighlight
+              onPress={onPress}
+              underlayColor={theme.secondaryColor}
+              onLayout={(e) =>
+                dispatch(setTabbarHeight(e.nativeEvent.layout.height))
+              }
+            >
+              <View className="justify-center items-center h-[100%]">
+                {children}
+              </View>
+            </TouchableHighlight>
           );
         },
       }}
@@ -50,20 +54,7 @@ export default function TabsLayout() {
           tabBarLabel: "Home",
         }}
       />
-      <Tabs.Screen
-        name="category"
-        options={{
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <Ionicons
-              name={focused ? "layers" : "layers-outline"}
-              size={24}
-              color={theme.accentColor}
-            />
-          ),
-          tabBarLabel: "Group By",
-        }}
-      />
+
       <Tabs.Screen
         name="flashcards"
         options={{
@@ -76,20 +67,6 @@ export default function TabsLayout() {
             />
           ),
           tabBarLabel: "Flash Cards",
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <Ionicons
-              name={focused ? "settings" : "settings-outline"}
-              size={24}
-              color={theme.accentColor}
-            />
-          ),
-          tabBarLabel: "Settings",
         }}
       />
     </Tabs>

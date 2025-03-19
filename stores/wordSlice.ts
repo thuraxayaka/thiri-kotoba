@@ -1,42 +1,47 @@
-import { createSlice } from "@reduxjs/toolkit";
-type word = {
-  id: number;
-  word: string;
-  type: string;
-  japanese: {
-    meaning: string;
-    hiragana: string;
-    romaji: string;
-    level: number;
-  };
-  chinese: {
-    meaning: string;
-    pinyin: string;
-  };
-  burmese: {
-    meaning: string;
-  };
-  korean: {
-    meaning: string;
-    reading: string;
-  };
-};
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { JapaneseWord, KoreanWord, ChineseWord, Language } from "@/types";
+
 interface wordSlice {
-  words: word[];
+  japanese: Partial<JapaneseWord>;
+
+  korean: Partial<KoreanWord>;
+
+  chinese: Partial<ChineseWord>;
+  language: Language;
 }
 
+type langProps = {
+  language: string | undefined;
+  word: object;
+  examples: Array<any>;
+};
+
 const initialState: wordSlice = {
-  words: [],
+  japanese: {},
+  korean: {},
+  chinese: {},
+  language: "japanese",
 };
 
 const wordSlice = createSlice({
   name: "word",
   initialState,
   reducers: {
-    setWords: (state, action) => {
-      state.words = action.payload;
+    setLanguageData(state, action: PayloadAction<langProps>) {
+      const { language, word, examples } = action.payload;
+
+      switch (language) {
+        case "japanese":
+          state.japanese = { ...word, examples };
+          break;
+        case "korean":
+          state.korean = { ...word, examples };
+          break;
+        case "chinese":
+          state.chinese = { ...word, examples };
+      }
     },
   },
 });
 export default wordSlice.reducer;
-export const { setWords } = wordSlice.actions;
+export const { setLanguageData } = wordSlice.actions;

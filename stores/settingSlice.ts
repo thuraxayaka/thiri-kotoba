@@ -1,24 +1,31 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 type settingState = {
   language: string;
   theme: string;
+  tabBarHeight: number;
 };
+
 const initialState: settingState = {
   language: "en",
   theme: "light",
+  tabBarHeight: 0,
 };
 const settingSlice = createSlice({
-  name: "settng",
+  name: "setting",
   initialState,
   reducers: {
-    changeLanguage: (state, action) => {
+    changeLanguage: (state, action: PayloadAction<string>) => {
       state.language = action.payload;
     },
-    changeTheme: (state, action) => {
+    changeTheme: (state, action: PayloadAction<string>) => {
       state.theme = action.payload;
+    },
+    setTabbarHeight: (state, action: PayloadAction<number>) => {
+      state.tabBarHeight = action.payload;
     },
   },
 });
 export default settingSlice.reducer;
-export const { changeLanguage, changeTheme } = settingSlice.actions;
+export const { changeLanguage, changeTheme, setTabbarHeight } =
+  settingSlice.actions;

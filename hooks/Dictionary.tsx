@@ -6,7 +6,7 @@ import N2Words from "@/constants/N2.json";
 import N1Words from "@/constants/N1.json";
 import AllWords from "@/constants/japanese_eng.json";
 import Words from "@/constants/words.json";
-import { useDatabase } from "./Database";
+
 type Word = {
   expression: string;
   meaning: string;
