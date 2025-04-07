@@ -7,7 +7,7 @@ import EvilIcons from "@expo/vector-icons/EvilIcons";
 import { useAppDispatch, useAppSelector } from "@/hooks/Hook";
 import { RootState, AppDispatch } from "@/stores/store";
 import { setSearchWord } from "@/stores/searchSlice";
-import { addNewWord } from "@/stores/wordSlice";
+// import { addNewWord } from "@/stores/wordSlice";
 import { setIsModalVisible } from "@/stores/formSlice";
 const SearchBox = () => {
   const theme = useTheme();

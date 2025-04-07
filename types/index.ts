@@ -78,3 +78,9 @@ export type Formality =
   | "formal"
   | "informal"
   | "casual";
+export type stepMapper = {
+  [key: number]: JSX.Element;
+};
+export type ChineseLevel = "HSK 1" | "HSK 2" | "HSK 3" | "HSK 4" | "HSK 5" | "HSK 6";
+export type JapaneseLevel = "JLPT N5" | "JLPT N4" | "JLPT N3" | "JLPT N2" | "JLPT N1"
+export type KoreanLevel = "TOPIK 1" | "TOPIK 2" | "TOPIK 3" | "TOPIK 4" | "TOPIK 5" | "TOPIK 6"

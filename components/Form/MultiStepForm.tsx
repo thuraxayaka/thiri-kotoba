@@ -3,9 +3,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  StyleSheet,
-  Animated,
-  Button,
   Image,
 } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
@@ -14,7 +11,6 @@ import JapaneseForm from "./JapaneseForm";
 import KoreanForm from "./KoreanForm";
 import ChineseForm from "./ChineseForm";
 import RadioButton from "./RadioButton";
-import { StatusBar } from "expo-status-bar";
 import { useAppDispatch, useAppSelector } from "@/hooks/Hook";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ScrollView } from "react-native-gesture-handler";
@@ -26,7 +22,7 @@ import {
 import Entypo from "@expo/vector-icons/Entypo";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import { RootState } from "@/stores/store";
-
+import { reset } from "@/stores/formSlice";
 import AllForm from "./All";
 type Props = {
   isVisible: boolean;
@@ -71,7 +67,9 @@ const AddWordModal = ({
       dispatch(setShouldScrollToStart(false));
     }
   }, [selectedOption, fillAllInformation, shouldScrollToStart]);
-
+  useEffect(() => {
+    dispatch(reset());
+  },[selectedOption])
   useEffect(() => {
     if (shouldScrollToEnd) {
       scrollRef.current?.scrollToEnd({ animated: true });

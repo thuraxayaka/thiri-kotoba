@@ -12,7 +12,6 @@ interface Props {
   word: string;
   type: string;
   level: string;
-
   reading: string;
   romaji?: string;
   formality: string;
@@ -119,7 +118,7 @@ const WordDetails = ({
           </View>
           <View className="flex-row items-center justify-between gap-4">
             <View>
-              <Text style={{ color: theme.mutedColor }}>{reading}</Text>
+              <Text style={{ color: theme.mutedColor,fontWeight: 'bold' }}>{reading}</Text>
               <Text style={{ color: theme.mutedColor }}>{romaji}</Text>
             </View>
             <View className="flex-row gap-1">

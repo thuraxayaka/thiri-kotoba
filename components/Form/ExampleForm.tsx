@@ -5,7 +5,7 @@ import {
   TextInput,
   Animated,
 } from "react-native";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import AntDesign from "@expo/vector-icons/AntDesign";
 
@@ -13,25 +13,117 @@ import { EvilIcons } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/Theme";
 import { useAppDispatch, useAppSelector } from "@/hooks/Hook";
 import { Example, Language } from "@/types";
-import { setShouldScrollToEnd } from "@/stores/formSlice";
-import { updateJapaneseWord } from "@/stores/formSlice";
+import { removeRequiredFields, setShouldScrollToEnd, setSubmitted } from "@/stores/formSlice";
+import { updateJapaneseWord, setRequiredFields,updateChineseWord,updateKoreanWord } from "@/stores/formSlice";
 import { RootState } from "@/stores/store";
 
 type Props = {
   language: Language;
 };
+
+type ExampleMapper = {
+  [key: string]: Example;
+};
 const ExampleForm = ({ language }: Props) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
-  const [exampleCount, setExampleCount] = useState<number>(3);
-  const [exampleData, setExampleData] = useState<Example[]>([]);
-  const [error, setError] = useState<boolean>(false);
-
+  const selector = useAppSelector((state:RootState) => state.form[language]);
+  const preExampleCount = selector.examples?.length === 0 ? 1 : selector.examples?.length ?? 3;
+  const [exampleCount, setExampleCount] = useState<number>(preExampleCount);
+  const [exampleData, setExampleData] = useState<ExampleMapper>({});
+  const formSelector = useAppSelector((state: RootState) => state.form);
   const isSubmitted = useAppSelector(
     (state: RootState) => state.form.isSubmitted
   );
+
+  const requiredFields = useAppSelector(
+    (state: RootState) => state.form.requiredFields
+  );
+
   useEffect(() => {
-    dispatch(updateJapaneseWord({ examples: exampleData }));
+    const examples = formSelector[language].examples;
+    if (examples)
+      for (let i = 0; i < examples?.length; i++) {
+        setExampleData((prev) => {
+          return { ...prev, [`eg${i}`]: examples[i] };
+        });
+      }
+  }, []);
+
+  useEffect(() => {
+    if(isSubmitted) {
+      for (let i = 0; i < exampleCount; i++) {
+        if (exampleData[`eg${i}`] === undefined) {
+          dispatch(
+            setRequiredFields({
+              [`eg${i}`]: {
+                sentence: "required",
+                phonetic: "required",
+                translation: "required",
+              },
+            })
+          );
+        } else {
+          dispatch(
+            setRequiredFields({
+              [`eg${i}`]: {
+                sentence: exampleData[`eg${i}`].sentence !== "" ? "" : "required",
+                phonetic: exampleData[`eg${i}`].phonetic !== "" ? "" : "required",
+                translation:
+                  exampleData[`eg${i}`].translation !== "" ? "" : "required",
+              },
+            })
+          );
+        }
+      }
+
+    }
+  }, [isSubmitted, exampleData,exampleCount]);
+  useEffect(() => {
+     const examples = [...Object.values(exampleData)]; 
+     let exampleDataCount = examples.length;
+     const emptyObj :Example = {phonetic: "",translation: "",sentence: ""}
+     while(exampleDataCount < exampleCount) {
+      if(exampleDataCount === exampleCount) {
+        break;
+      }
+      examples.push(emptyObj);
+      exampleDataCount++;
+    }
+    switch(language) {
+      case "japanese":
+      dispatch(updateJapaneseWord({examples}));
+      break;
+      case "chinese" : 
+      dispatch(updateChineseWord({examples}));
+      break;
+      case "korean" : 
+      dispatch(updateKoreanWord({examples}))
+    }
+     for(let [key,value] of Object.entries(requiredFields)) {
+      if(typeof value === "object") {
+        const keyIndex = parseInt(key.slice(2));
+        if(keyIndex+1 > exampleCount) {
+          dispatch(removeRequiredFields(key))
+        }
+      }
+     }
+
+  },[exampleCount])
+  useEffect(() => {
+    const examples = Object.values(exampleData).map((value) => {
+      return value;
+    });
+    switch(language) {
+      case "japanese":
+      dispatch(updateJapaneseWord({ examples }));
+      break;
+      case "chinese" : 
+      dispatch(updateChineseWord({examples}));
+      break;
+      case "korean" : 
+      dispatch(updateKoreanWord({examples}))
+    }
   }, [exampleData]);
 
   const inputsAnim = useMemo(
@@ -44,10 +136,10 @@ const ExampleForm = ({ language }: Props) => {
   );
   React.useEffect(() => {
     Animated.stagger(
-      100,
+      20,
       Array.from({ length: exampleCount }).map((_, index) => {
         return Animated.spring(inputsAnim[index], {
-          speed: 5,
+          speed: 10,
           toValue: 1,
           useNativeDriver: true,
         });
@@ -100,7 +192,7 @@ const ExampleForm = ({ language }: Props) => {
               key={index}
               className={`  w-full items-center mx-auto gap-2 ${
                 index == 0 ? "pt-0" : "pt-4"
-              } pb-4`}
+              } pb-8`}
             >
               <View className="w-full gap-2">
                 <Text style={{ color: theme.mutedColor }} className="text-sm">
@@ -109,118 +201,161 @@ const ExampleForm = ({ language }: Props) => {
                 <TextInput
                   multiline
                   placeholder={`example ${index + 1}`}
-                  className="px-4 w-[100%] rounded-lg py-4"
-                  style={{ backgroundColor: theme.secondaryColor }}
-                  value={exampleData[index]?.sentence}
+                  className={`px-4 w-[100%] rounded-lg py-4 ${
+                    requiredFields[`eg${index}`]?.sentence === "required" &&
+                    isSubmitted
+                      ? "border"
+                      : ""
+                  }`}
+                  style={{
+                    backgroundColor: theme.secondaryColor,
+                    color: theme.textColor,
+                    borderColor: theme.dangerColor,
+                  }}
+                  value={exampleData[`eg${index}`]?.sentence}
                   onChangeText={(text) => {
                     setExampleData((prev) => {
-                      if (prev[index] === undefined) {
-                        return [
+                      if (prev[`eg${index}`] === undefined) {
+                        return {
                           ...prev,
-                          { sentence: text, translation: "", phonetic: "" },
-                        ];
+                          [`eg${index}`]: {
+                            sentence: text,
+                            translation: "",
+                            phonetic: "",
+                          },
+                        };
                       }
-                      return [
-                        ...prev.map((item, i) => {
-                          if (i === index) {
-                            return { ...item, sentence: text };
-                          }
-
-                          return item;
-                        }),
-                      ];
+                      return {
+                        ...prev,
+                        [`eg${index}`]: {
+                          sentence: text,
+                          translation: prev[`eg${index}`].translation,
+                          phonetic: prev[`eg${index}`].phonetic,
+                        },
+                      };
                     });
+                    dispatch(setSubmitted(false));
                   }}
                 ></TextInput>
-                {error && (
-                  <View className="gap-1 flex-row items-center">
-                    <AntDesign
-                      name="exclamationcircle"
-                      size={12}
-                      color={theme.dangerColor}
-                    />
-                    <Text className="text-red-400 text-sm">Required</Text>
-                  </View>
-                )}
+                {requiredFields[`eg${index}`]?.sentence === "required" &&
+                  isSubmitted && (
+                    <View className="gap-1 flex-row items-center">
+                      <AntDesign
+                        name="exclamationcircle"
+                        size={12}
+                        color={theme.dangerColor}
+                      />
+                      <Text className="text-red-400 text-sm">Required</Text>
+                    </View>
+                  )}
               </View>
               <View className="w-full gap-2">
                 <Text style={{ color: theme.mutedColor }} className="text-sm">
                   Phonetic Transcription
                 </Text>
                 <TextInput
-                  className="px-4 py-4 rounded-lg w-[100%]"
+                  className={`px-4 w-[100%] rounded-lg py-4 ${
+                    requiredFields[`eg${index}`]?.phonetic === "required" &&
+                    isSubmitted
+                      ? "border"
+                      : ""
+                  }`}
                   multiline
-                  style={{ backgroundColor: theme.secondaryColor }}
-                  value={exampleData[index]?.phonetic}
+                  style={{
+                    backgroundColor: theme.secondaryColor,
+                    color: theme.textColor,
+                    borderColor: theme.dangerColor,
+                  }}
+                  value={exampleData[`eg${index}`]?.phonetic}
                   onChangeText={(text) => {
                     setExampleData((prev) => {
-                      if (prev[index] === undefined) {
-                        return [
+                      if (prev[`eg${index}`] === undefined) {
+                        return {
                           ...prev,
-                          { phonetic: text, translation: "", sentence: "" },
-                        ];
+                          [`eg${index}`]: {
+                            sentence: "",
+                            translation: "",
+                            phonetic: text,
+                          },
+                        };
                       }
-                      return [
-                        ...prev.map((item, i) => {
-                          if (i === index) {
-                            return { ...item, phonetic: text };
-                          }
-
-                          return item;
-                        }),
-                      ];
+                      return {
+                        ...prev,
+                        [`eg${index}`]: {
+                          sentence: prev[`eg${index}`].sentence,
+                          translation: prev[`eg${index}`].translation,
+                          phonetic: text,
+                        },
+                      };
                     });
+                    dispatch(setSubmitted(false));
                   }}
                 ></TextInput>
-                {error && (
-                  <View className="gap-1 flex-row items-center">
-                    <AntDesign
-                      name="exclamationcircle"
-                      size={12}
-                      color={theme.dangerColor}
-                    />
-                    <Text className="text-red-400 text-sm">Required</Text>
-                  </View>
-                )}
+                {requiredFields[`eg${index}`]?.phonetic === "required" &&
+                  isSubmitted && (
+                    <View className="gap-1 flex-row items-center">
+                      <AntDesign
+                        name="exclamationcircle"
+                        size={12}
+                        color={theme.dangerColor}
+                      />
+                      <Text className="text-red-400 text-sm">Required</Text>
+                    </View>
+                  )}
               </View>
               <View className="w-full gap-2">
                 <Text style={{ color: theme.mutedColor }} className="text-sm">
                   Translation
                 </Text>
                 <TextInput
-                  className="px-4 rounded-lg py-4 w-[100%]"
-                  style={{ backgroundColor: theme.secondaryColor }}
-                  value={exampleData[index]?.translation}
+                  className={`px-4 w-[100%] rounded-lg py-4 ${
+                    requiredFields[`eg${index}`]?.translation === "required" &&
+                    isSubmitted
+                      ? "border"
+                      : ""
+                  }`}
+                  style={{
+                    backgroundColor: theme.secondaryColor,
+                    color: theme.textColor,
+                    borderColor: theme.dangerColor,
+                  }}
+                  value={exampleData[`eg${index}`]?.translation}
                   onChangeText={(text) => {
                     setExampleData((prev) => {
-                      if (prev[index] === undefined) {
-                        return [
+                      if (prev[`eg${index}`] === undefined) {
+                        return {
                           ...prev,
-                          { translation: text, phonetic: "", sentence: "" },
-                        ];
+                          [`eg${index}`]: {
+                            sentence: "",
+                            translation: text,
+                            phonetic: "",
+                          },
+                        };
                       }
-                      return [
-                        ...prev.map((item, i) => {
-                          if (i === index) {
-                            return { ...item, translation: text };
-                          }
-
-                          return item;
-                        }),
-                      ];
+                      return {
+                        ...prev,
+                        [`eg${index}`]: {
+                          sentence: prev[`eg${index}`].sentence,
+                          translation: text,
+                          phonetic: prev[`eg${index}`].phonetic,
+                        },
+                      };
                     });
+                    dispatch(setSubmitted(false));
                   }}
                 ></TextInput>
-                {error && (
-                  <View className="gap-1 flex-row items-center">
-                    <AntDesign
-                      name="exclamationcircle"
-                      size={12}
-                      color={theme.dangerColor}
-                    />
-                    <Text className="text-red-400 text-sm">Required</Text>
-                  </View>
-                )}
+
+                {requiredFields[`eg${index}`]?.translation === "required" &&
+                  isSubmitted && (
+                    <View className="gap-1 flex-row items-center">
+                      <AntDesign
+                        name="exclamationcircle"
+                        size={12}
+                        color={theme.dangerColor}
+                      />
+                      <Text className="text-red-400 text-sm">Required</Text>
+                    </View>
+                  )}
               </View>
             </View>
           </Animated.View>

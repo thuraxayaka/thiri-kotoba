@@ -195,8 +195,8 @@ export default function DetailsScreen() {
                   <View key={i} className="flex-row gap-2">
                     <Text>{i + 1}.</Text>
                     <View>
-                      <Text>{getStyledSentences(example.sentence)}</Text>
-                      <Text style={{ color: theme.mutedColor }}>
+                      <Text className="font-bold">{getStyledSentences(example.sentence)}</Text>
+                      <Text style={{ color: theme.mutedColor,fontWeight: '600' }}>
                         {example.phonetic}
                       </Text>
                       <Text style={{ color: theme.mutedColor }}>
@@ -294,8 +294,8 @@ export default function DetailsScreen() {
                   <View key={i} className="flex-row gap-2 items-start ">
                     <Text className=" text-lg">{i + 1}.</Text>
                     <View>
-                      <Text>{getStyledSentences(example.sentence)}</Text>
-                      <Text style={{ color: theme.mutedColor }}>
+                      <Text className="font-bold">{getStyledSentences(example.sentence)}</Text>
+                      <Text style={{ color: theme.mutedColor,fontWeight: 'bold' }}>
                         {example.phonetic}
                       </Text>
                       <Text style={{ color: theme.mutedColor }}>
@@ -393,8 +393,8 @@ export default function DetailsScreen() {
                   <View key={i} className="flex-row gap-2 items-start ">
                     <Text className=" text-lg">{i + 1}.</Text>
                     <View>
-                      <Text>{getStyledSentences(example.sentence)}</Text>
-                      <Text style={{ color: theme.mutedColor }}>
+                      <Text className="font-bold">{getStyledSentences(example.sentence)}</Text>
+                      <Text style={{ color: theme.mutedColor,fontWeight: 'bold' }}>
                         {example.phonetic}
                       </Text>
                       <Text style={{ color: theme.mutedColor }}>

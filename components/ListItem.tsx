@@ -4,6 +4,7 @@ import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { useTheme } from "@/hooks/Theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSQLiteContext } from "expo-sqlite";
+import { Map } from "@/types";
 type props = {
   id: number;
   word: string;
@@ -32,23 +33,25 @@ const ListItem = ({
   };
 
   const handleFavorite = async () => {
-    setFavorite((prev) => (prev === 0 ? 1 : 0));
-
     try {
       await db.runAsync(
         "UPDATE word SET isFavorite = $favorite WHERE id = $id ",
-        { $favorite: favorite, $id: id }
+        { $favorite: favorite === 0 ? 1 : 0, $id: id }
       );
+      setFavorite((prev) => {
+        return prev === 0 ? 1 : 0;
+      });
     } catch (err) {
       console.log(err);
     }
   };
-  const flatImages: { [key: string]: any } = {
-    japanese: require("@/assets/flags/japanese.png"),
-    korean: require("@/assets/flags/korean.png"),
-    chinese: require("@/assets/flags/chinese.png"),
-  };
-  console.log(flatImages[language]);
+
+  const languageText:Map<string> = {
+    "japanese": "JP",
+    "chinese" : "CN",
+    "korean" : "KR"
+  }
+
   return (
     <SafeAreaProvider>
       <SafeAreaView>
@@ -60,13 +63,13 @@ const ListItem = ({
           <View className="flex-row items-center justify-between">
             <View className="flex justify-center gap-2 mt-2  items-start">
               <View className="flex flex-row  gap-2 items-center">
-                <Image
-                  source={flatImages[language]}
-                  className="w-6 h-4 object-cover  align-bottom"
-                />
-
+                
+                <Text className="font-bold">[{languageText[language]}]</Text>
+                <View className='flex-row items-center'>
                 <Text>{word}</Text>
-                <Text>({phonetic})</Text>
+                <Text className="text-sm" style={{color: theme.mutedColor}}>({phonetic})</Text>
+
+                </View>
               </View>
               <View className="mb-2">
                 <Text>{translation}</Text>

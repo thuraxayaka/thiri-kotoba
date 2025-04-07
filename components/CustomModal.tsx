@@ -74,8 +74,7 @@ const CustomModal = ({
         },
       ]
     );
-    console.log(Object.values(inputs));
-    console.log(Object.keys(inputs));
+    
   };
   const updateState = async () => {
     const word = await db.getFirstAsync(

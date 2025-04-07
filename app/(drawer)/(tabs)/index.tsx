@@ -50,7 +50,7 @@ export default function Index() {
   // );
   useEffect(() => {
     async function populate() {
-      // await SecureStore.deleteItemAsync("populated");
+  
       const isPopulated = await SecureStore.getItemAsync("populated");
       if (isPopulated) {
         console.log("already populated.Skipping....");
@@ -73,6 +73,7 @@ export default function Index() {
     dispatch(reset());
   };
   const detectLanguage = (text: string): string => {
+    if (text === "") return "";
     const romaji = /[a-zA-Z]/g.test(text);
     if (romaji) return "romaji";
     const isBurmese = /[\u1000-\u109F]/g.test(text);
@@ -85,10 +86,15 @@ export default function Index() {
   };
   useEffect(() => {
     async function getSearchData(language: string) {
+      if (language === "") {
+        setData([]);
+        return;
+      }
       if (language === "romaji") {
         try {
           const japaneseRes = await db.getAllAsync(
-            "SELECT 'japanese' as language,word.id,japanese.kanji AS word,japanese.hiragana AS phonetic,word.translation,word.isFavorite from word JOIN japanese ON japanese.word_id = word.id WHERE romaji LIKE $search;",
+            "SELECT 'japanese' as language,word.id,japanese.kanji AS word,japanese.hiragana AS phonetic,word.translation,word.isFavorite,japanese.romaji from word JOIN japanese ON japanese.word_id = word.id WHERE romaji LIKE $search",
+            // "SELECT * FROM japanese",
             { $search: `${searchWord}%` }
           );
           const chineseRes = await db.getAllAsync(
@@ -99,7 +105,7 @@ export default function Index() {
             "SELECT 'korean' as language,word.id,korean.hangul AS word,korean.romaji AS phonetic,translation,word.isFavorite from word JOIN korean ON korean.word_id = word.id WHERE romaji LIKE $search;",
             { $search: `${searchWord}%` }
           );
-
+         
           setData([...japaneseRes, ...chineseRes, ...koreanRes]);
         } catch (error) {
           console.log("error in index.tsx.Caused by " + error);
@@ -192,8 +198,9 @@ export default function Index() {
         }
       />
 
-      <View className="mx-2 mb-[6rem]">
+      <View className="mx-2  bg-amber-400">
         <FlatList
+          style={{}}
           ItemSeparatorComponent={() => {
             return (
               <View

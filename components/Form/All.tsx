@@ -8,15 +8,22 @@ import {
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import SelectBox from "./SelectBox";
 import { useTheme } from "@/hooks/Theme";
-import { PartsOfSpeech, Formality } from "@/types";
+import { PartsOfSpeech, Formality, stepMapper } from "@/types";
 
 import { useAppDispatch, useAppSelector } from "@/hooks/Hook";
 import { updateJapaneseWord } from "@/stores/formSlice";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { setShouldScrollToStart } from "@/stores/formSlice";
-
+import { SelectList } from "react-native-dropdown-select-list";
 import ExampleForm from "./ExampleForm";
-
+type SelectListPartsOfSpeech = {
+  key: string | number;
+  value: PartsOfSpeech;
+};
+type SelectListFormality = {
+  key: string | number;
+  value: Formality;
+};
 const AllForm = () => {
   const japaneseSel = useAppSelector((state) => state.form.japanese);
   const chineseSel = useAppSelector((state) => state.form.chinese);
@@ -28,9 +35,7 @@ const AllForm = () => {
   const [jromaji, setJRomaji] = useState<string>(japaneseSel.romaji || "");
   const [hangul, setHangul] = useState<string>(KoreanSel.hangul || "");
   const [kromaji, setKRomaji] = useState<string>(KoreanSel.romaji || "");
-  const [partsOfSpeech, setPartsOfSpeech] = useState<PartsOfSpeech>(
-    japaneseSel.type || "noun"
-  );
+
   const [burmeseMeaning, setBurmeseMeaning] = useState<string>(
     japaneseSel.translation || ""
   );
@@ -38,9 +43,11 @@ const AllForm = () => {
     japaneseSel.definition || ""
   );
   const [category, setCategory] = useState<string>(japaneseSel.category || "");
-  const [formality, setFormality] = useState<Formality>(
-    japaneseSel.formality || "formal"
-  );
+  const [selectedPartsOfSpeech, setSelectedPartsOfSpeech] =
+    React.useState<PartsOfSpeech>("noun");
+  const [selectedFormality, setSelectedFormality] =
+    useState<Formality>("neutral");
+
   const [currentStep, setCurrentStep] = useState<number>(0);
 
   const inputs = [
@@ -134,11 +141,11 @@ const AllForm = () => {
       hangul,
       hanzi,
       pinyin,
-      partsOfSpeech,
+      type: selectedPartsOfSpeech,
       translation: burmeseMeaning,
       definition: englishMeaning,
       category,
-      formality,
+      formality: selectedFormality,
     };
     dispatch(updateJapaneseWord({ language: "japanese", ...data }));
   }, [
@@ -150,34 +157,75 @@ const AllForm = () => {
     hanzi,
     pinyin,
 
-    partsOfSpeech,
+    selectedPartsOfSpeech,
     burmeseMeaning,
     englishMeaning,
     category,
-    formality,
+    selectedFormality,
   ]);
-  const options: PartsOfSpeech[] = [
-    "noun",
-    "pronoun",
-    "verb",
-    "adjective",
-    "adverb",
-    "preposition",
-    "conjunction",
-    "interjection",
+  const partsOfSpeech: SelectListPartsOfSpeech[] = [
+    {
+      key: "1",
+      value: "noun",
+    },
+    {
+      key: "2",
+      value: "pronoun",
+    },
+    {
+      key: "3",
+      value: "adjective",
+    },
+    {
+      key: "4",
+      value: "verb",
+    },
+    {
+      key: "5",
+      value: "adverb",
+    },
+    {
+      key: "6",
+      value: "preposition",
+    },
+    {
+      key: "7",
+      value: "conjunction",
+    },
+    {
+      key: "8",
+      value: "interjection",
+    },
   ];
-  const formalityArr: Formality[] = [
-    "formal",
-    "informal",
-    "rude",
-    "neutral",
-    "polite",
+  const formality: SelectListFormality[] = [
+    {
+      key: "1",
+      value: "formal",
+    },
+    {
+      key: "2",
+      value: "informal",
+    },
+    {
+      key: "3",
+      value: "neutral",
+    },
+    {
+      key: "4",
+      value: "casual",
+    },
+    {
+      key: "5",
+      value: "polite",
+    },
+    {
+      key: "6",
+      value: "rude",
+    },
   ];
 
   const theme = useTheme();
-  type stepMapper = {
-    [key: number]: JSX.Element;
-  };
+
   const steps: stepMapper = {
     0: (
       <View>
@@ -209,10 +257,17 @@ const AllForm = () => {
           <Text className="text-sm" style={{ color: theme.mutedColor }}>
             Parts of Speech
           </Text>
-          <SelectBox
-            selected={partsOfSpeech}
-            options={options}
-            onSelect={setPartsOfSpeech}
+          <SelectList
+            boxStyles={{
+              backgroundColor: theme.primaryColor,
+              borderStyle: "solid",
+              borderWidth: 3,
+              borderColor: theme.secondaryColor,
+            }}
+            dropdownStyles={{ borderColor: theme.secondaryColor }}
+            data={partsOfSpeech}
+            setSelected={(val: PartsOfSpeech) => setSelectedPartsOfSpeech(val)}
+            save="value"
           />
         </View>
 
@@ -220,10 +275,17 @@ const AllForm = () => {
           <Text className="text-sm" style={{ color: theme.mutedColor }}>
             Formality
           </Text>
-          <SelectBox<Formality>
-            selected={formality}
-            onSelect={setFormality}
-            options={formalityArr}
+          <SelectList
+            boxStyles={{
+              backgroundColor: theme.primaryColor,
+              borderStyle: "solid",
+              borderWidth: 3,
+              borderColor: theme.secondaryColor,
+            }}
+            dropdownStyles={{ borderColor: theme.secondaryColor }}
+            data={formality}
+            setSelected={(val: Formality) => setSelectedFormality(val)}
+            save="value"
           />
         </View>
       </View>

@@ -1,6 +1,9 @@
-import { ChineseWord, JapaneseWord, KoreanWord, Language } from "@/types";
+import { ChineseWord, JapaneseWord, KoreanWord, Language, Map } from "@/types";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
+type field = {
+  [key: string]: any;
+};
 type FormState = {
   shouldScrollToEnd: boolean;
   shouldScrollToStart: boolean;
@@ -10,6 +13,7 @@ type FormState = {
   chinese: Partial<ChineseWord>;
   language: Language;
   isSubmitted: boolean;
+  requiredFields: field;
 };
 const initialState: FormState = {
   shouldScrollToEnd: false,
@@ -20,6 +24,7 @@ const initialState: FormState = {
   chinese: {},
   isSubmitted: false,
   language: "japanese",
+  requiredFields: {},
 };
 
 const formSlice = createSlice({
@@ -58,7 +63,28 @@ const formSlice = createSlice({
     },
     updateAll(state, action: PayloadAction<any>) {},
     setSubmitted(state, action: PayloadAction<boolean>) {
+      // console.log("here : " + action.payload);
       state.isSubmitted = action.payload;
+    },
+    setRequiredFields(state, action: PayloadAction<any>) {
+      // console.log("Required Fields in formSlice.js :");
+      // console.log(action.payload);
+      state.requiredFields = {
+        ...state.requiredFields,
+        ...action.payload,
+      };
+
+      // console.log(state.requiredFields);
+    },
+    removeRequiredFields(state,action: PayloadAction<any>) {
+      
+      const filteredKeys = Object.keys(state.requiredFields).filter((value) => value !== action.payload);
+      let updatedStates:Map<string> = {};
+      filteredKeys.forEach((key) => {
+        return updatedStates[key] = state.requiredFields[key]
+      })
+
+      state.requiredFields = updatedStates;
     },
     reset(state) {
       (state.chinese = {}),
@@ -79,5 +105,7 @@ export const {
   reset,
   updateAll,
   setSubmitted,
+  setRequiredFields,
+  removeRequiredFields
 } = formSlice.actions;
 export default formSlice.reducer;

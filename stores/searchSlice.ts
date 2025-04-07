@@ -11,6 +11,7 @@ const searchReducer = createSlice({
   initialState,
   reducers: {
     setSearchWord: (state, action: PayloadAction<string>) => {
+    
       state.searchWord = action.payload;
     },
   },

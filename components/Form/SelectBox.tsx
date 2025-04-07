@@ -9,6 +9,8 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useTheme } from "@/hooks/Theme";
 
+import { SelectList } from "react-native-dropdown-select-list";
+
 type Props<T> = {
   selected: T;
   onSelect: React.Dispatch<React.SetStateAction<T>>;
@@ -39,26 +41,28 @@ function SelectBox<T extends React.ReactNode>({
       </TouchableOpacity>
 
       <Modal visible={isVisible} transparent={true}>
-        <View className="justify-center items-center flex-1">
+        <View
+          className="justify-center items-center rounded-xl w-full h-[50%] absolute bottom-0 left-0"
+          style={{ backgroundColor: theme.faintedColor }}
+        >
           <View
             className="w-[80%] rounded-lg"
             style={{ backgroundColor: theme.secondaryColor }}
           >
             {options.map((option, i) => (
-              <TouchableHighlight
-                underlayColor={theme.faintedColor}
+              <TouchableOpacity
                 key={i}
                 style={{
                   borderColor: theme.mutedColor,
                 }}
-                className="border-b-hairline"
+                // className="border-b-hairline"
                 onPress={() => {
                   onSelect(option);
                   setIsVisible(false);
                 }}
               >
                 <Text className="px-4 py-4">{option}</Text>
-              </TouchableHighlight>
+              </TouchableOpacity>
             ))}
           </View>
         </View>
