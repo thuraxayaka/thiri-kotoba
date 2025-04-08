@@ -151,7 +151,7 @@ const ChineseForm = () => {
       level,
       formality: selectedFormality,
       translation: burmeseMeaning,
-      defintion: englishMeaning,
+      definition: englishMeaning,
       type: selectedPartsOfSpeech,
       category,
     };

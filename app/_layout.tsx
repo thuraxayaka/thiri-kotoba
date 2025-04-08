@@ -38,49 +38,88 @@ const migrateDb = async (db: SQLiteDatabase) => {
     // Run migrations if needed
     if (currentDbVersion === 0) {
       // Initial migration
-      await db.execAsync(`CREATE TABLE IF NOT EXISTS word (
+
+      
+      await db.execAsync(`CREATE TABLE IF NOT EXISTS japanese_word (
       id INTEGER PRIMARY KEY  AUTOINCREMENT,
       word TEXT NOT NULL,
-      type TEXT NOT NULL,
-      category TEXT NOT NULL,
+      parts_of_speech TEXT NOT NULL,
+      categories TEXT NOT NULL,
+      english TEXT NOT NULL,
+      burmese TEXT NOT NULL,
       definition TEXT NOT NULL,
-      translation TEXT NOT NULL,
-      isFavorite INTEGER);
+      level TEXT NOT NULL,
+      formality TEXT NOT NULL,
+      pronunciation TEXT NOT NULL,
+      romaji TEXT NOT NULL,
+      synonyms TEXT NOT NULL,
+      antonyms TEXT NOT NULL,
+      frequency TEXT NOT NULL,
+      favorite INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
     `);
 
-      await db.execAsync(`CREATE TABLE IF NOT EXISTS japanese(
-      id INTEGER PRIMARY KEY  AUTOINCREMENT,
-      kanji TEXT NOT NULL,
-      hiragana TEXT NOT NULL,
-      romaji TEXT NOT NULL,
-      level TEXT,
-      formality TEXT,
-      synonyms TEXT,
-      antonyms TEXT,
-      word_id INTEGER,
-      FOREIGN KEY (word_id) REFERENCES  word(id) ON DELETE CASCADE
-      );`);
       await db.execAsync(`
-        CREATE TABLE IF NOT EXISTS chinese(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        hanzi TEXT  NOT NULL,
+      CREATE TABLE IF NOT EXISTS japanese_example(
+      id INTEGER PRIMARY KEY  AUTOINCREMENT,
+      word_id INTEGER,
+      sentence TEXT NOT NULL,
+      pronunciation TEXT NOT NULL,
+      translation TEXT NOT NULL,
+      FOREIGN KEY (word_id) REFERENCES japanese_word(id) ON DELETE CASCADE
+      );`);
+        
+
+      await db.execAsync(`CREATE TABLE IF NOT EXISTS chinese_word (
+        id INTEGER PRIMARY KEY  AUTOINCREMENT,
+        word TEXT NOT NULL,
+        parts_of_speech TEXT NOT NULL,
+        categories TEXT NOT NULL,
+        english TEXT NOT NULL,
+        burmese TEXT NOT NULL,
+        definition TEXT NOT NULL,
+        level TEXT NOT NULL,
+        formality TEXT NOT NULL,
         pinyin TEXT NOT NULL,
         pinyin_simplified TEXT NOT NULL,
-        level TEXT,
-        formality TEXT,
-        word_id INTEGER,
-        FOREIGN KEY (word_id) REFERENCES word(id) ON DELETE CASCADE
-        );`);
+        synonyms TEXT NOT NULL,
+        antonyms TEXT NOT NULL,
+        frequency TEXT NOT NULL,
+        favorite INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
       await db.execAsync(`
-        CREATE TABLE IF NOT EXISTS korean(
+        CREATE TABLE IF NOT EXISTS chinese_example(
         id INTEGER PRIMARY KEY  AUTOINCREMENT,
-        hangul TEXT  NOT NULL,
-        romaji TEXT NOT NULL,
-        level TEXT,
-        formality TEXT,
         word_id INTEGER,
-        FOREIGN KEY (word_id) REFERENCES word(id) ON DELETE CASCADE
+        sentence TEXT NOT NULL,
+        pronunciation TEXT NOT NULL,
+        translation TEXT NOT NULL,
+        FOREIGN KEY (word_id) REFERENCES chinese_word(id) ON DELETE CASCADE
         );`);
+        await db.execAsync(`CREATE TABLE IF NOT EXISTS korean_word (
+          id INTEGER PRIMARY KEY  AUTOINCREMENT,
+          word TEXT NOT NULL,
+          parts_of_speech TEXT NOT NULL,
+          categories TEXT NOT NULL,
+          english TEXT NOT NULL,
+          burmese TEXT NOT NULL,
+          definition TEXT NOT NULL,
+          level TEXT NOT NULL,
+          formality TEXT NOT NULL,
+          romaji TEXT NOT NULL,
+          synonyms TEXT NOT NULL,
+          antonyms TEXT NOT NULL,
+          frequency TEXT NOT NULL,
+          favorite INTEGER,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+          );
+        `);
+
+     
       await db.execAsync(`
         CREATE TABLE IF NOT EXISTS korean_example(
         id INTEGER PRIMARY KEY  AUTOINCREMENT,
@@ -88,26 +127,10 @@ const migrateDb = async (db: SQLiteDatabase) => {
         sentence TEXT NOT NULL,
         phonetic TEXT NOT NULL,
         translation TEXT NOT NULL,
-        FOREIGN KEY (word_id) REFERENCES korean(id) ON DELETE CASCADE
+        FOREIGN KEY (word_id) REFERENCES korean_word(id) ON DELETE CASCADE
         );`);
-      await db.execAsync(`
-        CREATE TABLE IF NOT EXISTS japanese_example(
-        id INTEGER PRIMARY KEY  AUTOINCREMENT,
-        word_id INTEGER,
-        sentence TEXT NOT NULL,
-        phonetic TEXT NOT NULL,
-        translation TEXT NOT NULL,
-        FOREIGN KEY (word_id) REFERENCES japanese(id) ON DELETE CASCADE
-        );`);
-      await db.execAsync(`
-        CREATE TABLE IF NOT EXISTS chinese_example(
-        id INTEGER PRIMARY KEY  AUTOINCREMENT,
-        word_id INTEGER,
-        sentence TEXT NOT NULL,
-        phonetic TEXT NOT NULL,
-        translation TEXT NOT NULL,
-        FOREIGN KEY (word_id) REFERENCES chinese(id) ON DELETE CASCADE
-        );`);
+     
+     
     }
 
     // Increment the version after migration

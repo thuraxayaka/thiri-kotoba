@@ -1,0 +1,178 @@
+[
+    {
+      "id": 1,
+      "word": "姉",
+      "partsOfSpeech": "noun",
+      "categories": ["family", "kinship terms"],
+      "english": "older sister, elder sister",
+      "burmese": "အစ်မ",
+      "definition": "One's own elder sister.",
+      "language": "japanese",
+      "level": "N5",
+      "formality": "neutral",
+      "pronunciation": "あね",
+      "romaji": "ane",
+      "synonyms": ["姉上", "お姉さん"],
+      "antonyms": ["妹"],
+      "frequency": "high",
+      "examples": [
+        {
+          "sentence": "私(わたし)の姉(あね)は医者(いしゃ)です。",
+          "pronunciation": "Watashi no ane wa isha desu.",
+          "translation": "My older sister is a doctor."
+        },
+        {
+          "sentence": "姉(あね)と一緒(いっしょ)に買(か)い物(もの)に行(い)きました。",
+          "pronunciation": "Ane to issho ni kaimono ni ikimashita.",
+          "translation": "I went shopping with my older sister."
+        },
+        {
+          "sentence": "姉(あね)は私(わたし)より三(みっ)つ年上(としうえ)です。",
+          "pronunciation": "Ane wa watashi yori mittsu toshiue desu.",
+          "translation": "My older sister is three years older than me."
+        },
+        {
+          "sentence": "姉(あね)に相談(そうだん)してみます。",
+          "pronunciation": "Ane ni soudan shite mimasu.",
+          "translation": "I will try consulting my older sister."
+        },
+        {
+          "sentence": "姉(あね)が結婚(けっこん)しました。",
+          "pronunciation": "Ane ga kekkon shimashita.",
+          "translation": "My older sister got married."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "word": "青",
+      "partsOfSpeech": "noun",
+      "categories": ["colors", "nature"],
+      "english": "blue, green (e.g., traffic lights, unripe fruit)",
+      "burmese": "အပြာရောင်, အစိမ်းရောင်",
+      "definition": "The color blue; sometimes used for green, especially in traditional contexts or for unripe things.",
+      "language": "japanese",
+      "level": "N5",
+      "formality": "neutral",
+      "pronunciation": "あお",
+      "romaji": "ao",
+      "synonyms": ["ブルー", "緑"],
+      "antonyms": ["赤"],
+      "frequency": "high",
+      "examples": [
+        {
+          "sentence": "空(そら)の青(あお)がきれいだ。",
+          "pronunciation": "Sora no ao ga kirei da.",
+          "translation": "The blue of the sky is beautiful."
+        },
+        {
+          "sentence": "信号(しんごう)が青(あお)に変(か)わった。",
+          "pronunciation": "Shingou ga ao ni kawatta.",
+          "translation": "The traffic light turned green."
+        },
+        {
+          "sentence": "彼(かれ)は青(あお)いシャツを着(き)ている。",
+          "pronunciation": "Kare wa aoi shatsu o kite iru.",
+          "translation": "He is wearing a blue shirt."
+        },
+        {
+          "sentence": "まだ青(あお)いリンゴだよ。",
+          "pronunciation": "Mada aoi ringo da yo.",
+          "translation": "It's still a green (unripe) apple."
+        },
+        {
+          "sentence": "海(うみ)の青(あお)は深(ふか)い。",
+          "pronunciation": "Umi no ao wa fukai.",
+          "translation": "The blue of the sea is deep."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "word": "赤",
+      "partsOfSpeech": "noun",
+      "categories": ["colors", "symbols"],
+      "english": "red, crimson, scarlet",
+      "burmese": "အနီရောင်",
+      "definition": "The color red.",
+      "language": "japanese",
+      "level": "N5",
+      "formality": "neutral",
+      "pronunciation": "あか",
+      "romaji": "aka",
+      "synonyms": ["レッド", "真紅"],
+      "antonyms": ["青", "黒"],
+      "frequency": "high",
+      "examples": [
+        {
+          "sentence": "その車(くるま)の色(いろ)は赤(あか)です。",
+          "pronunciation": "Sono kuruma no iro wa aka desu.",
+          "translation": "The color of that car is red."
+        },
+        {
+          "sentence": "彼女(かのじょ)は赤(あか)いドレスを着(き)ていた。",
+          "pronunciation": "Kanojo wa akai doresu o kite ita.",
+          "translation": "She was wearing a red dress."
+        },
+        {
+          "sentence": "信号(しんごう)が赤(あか)だから止(と)まりなさい。",
+          "pronunciation": "Shingou ga aka dakara tomarinasai.",
+          "translation": "Stop because the traffic light is red."
+        },
+        {
+          "sentence": "恥(は)ずかしくて顔(かお)が赤(あか)くなった。",
+          "pronunciation": "Hazukashikute kao ga akaku natta.",
+          "translation": "My face turned red from embarrassment."
+        },
+        {
+          "sentence": "赤(あか)ワインを一杯(いっぱい)ください。",
+          "pronunciation": "Aka wain o ippai kudasai.",
+          "translation": "Please give me a glass of red wine."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "word": "兄",
+      "partsOfSpeech": "noun",
+      "categories": ["family", "kinship terms"],
+      "english": "older brother, elder brother",
+      "burmese": "အစ်ကို",
+      "definition": "One's own elder brother.",
+      "language": "japanese",
+      "level": "N5",
+      "formality": "neutral",
+      "pronunciation": "あに",
+      "romaji": "ani",
+      "synonyms": ["兄上", "お兄さん"],
+      "antonyms": ["弟"],
+      "frequency": "high",
+      "examples": [
+        {
+          "sentence": "私(わたし)の兄(あに)は大学生(だいがくせい)です。",
+          "pronunciation": "Watashi no ani wa daigakusei desu.",
+          "translation": "My older brother is a university student."
+        },
+        {
+          "sentence": "兄(あに)とよく喧嘩(けんか)しました。",
+          "pronunciation": "Ani to yoku kenka shimashita.",
+          "translation": "I often fought with my older brother."
+        },
+        {
+          "sentence": "兄(あに)は背(せ)が高(たか)い。",
+          "pronunciation": "Ani wa se ga takai.",
+          "translation": "My older brother is tall."
+        },
+        {
+          "sentence": "兄(あに)にプレゼントをあげた。",
+          "pronunciation": "Ani ni purezento o ageta.",
+          "translation": "I gave a present to my older brother."
+        },
+        {
+          "sentence": "彼(かれ)は私(わたし)の兄(あに)に似(に)ている。",
+          "pronunciation": "Kare wa watashi no ani ni nite iru.",
+          "translation": "He resembles my older brother."
+        }
+      ]
+    }
+  ]

@@ -72,25 +72,26 @@ export default function Index() {
     dispatch(setIsModalVisible(false));
     dispatch(reset());
   };
-  const detectLanguage = (text: string): string => {
+  const detectWord = (text: string): string => {
     if (text === "") return "";
     const romaji = /[a-zA-Z]/g.test(text);
     if (romaji) return "romaji";
     const isBurmese = /[\u1000-\u109F]/g.test(text);
     if (isBurmese) return "burmese";
-    const isJapanese = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]/g.test(text);
-    if (isJapanese) return "japanese";
+    const isJapanese = /[\u3040-\u309F\u30A0-\u30FF]/g.test(text);
+    if (isJapanese) return "hiragana/katakana";
     const isKorean = /[\uAC00-\uD7AF\u1100-\u11FF]/g.test(text);
-    if (isKorean) return "korean";
-    return "chinese";
+    if (isKorean) return "hangul";
+    return "kenji";
   };
   useEffect(() => {
-    async function getSearchData(language: string) {
-      if (language === "") {
+    async function getSearchData(word: string) {
+      console.log(word);
+      if (word === "") {
         setData([]);
         return;
       }
-      if (language === "romaji") {
+      if (word === "romaji") {
         try {
           const japaneseRes = await db.getAllAsync(
             "SELECT 'japanese' as language,word.id,japanese.kanji AS word,japanese.hiragana AS phonetic,word.translation,word.isFavorite,japanese.romaji from word JOIN japanese ON japanese.word_id = word.id WHERE romaji LIKE $search",
@@ -110,7 +111,7 @@ export default function Index() {
         } catch (error) {
           console.log("error in index.tsx.Caused by " + error);
         }
-      } else if (language === "burmese") {
+      } else if (word === "burmese") {
         try {
           const japaneseRes = await db.getAllAsync(
             "SELECT 'japanese' as language,word.id,japanese.kanji AS word,japanese.hiragana AS phonetic,word.translation,word.isFavorite from word JOIN japanese ON japanese.word_id = word.id WHERE translation LIKE $search;",
@@ -120,18 +121,17 @@ export default function Index() {
         } catch (err) {
           console.log(err);
         }
-      } else if (language === "japanese") {
+      } else if (word === "hiragana/katakana") {
         try {
-          const result = await db.getAllAsync(
+          const jpResult = await db.getAllAsync(
             "SELECT 'japanese' as language,word.id,japanese.kanji AS word,japanese.hiragana AS phonetic,word.translation,isFavorite from word JOIN japanese ON japanese.word_id = word.id WHERE hiragana LIKE $search OR kanji LIKE $search;",
             { $search: `${searchWord}%` }
           );
-
-          setData([...result]);
+          setData([...jpResult]);
         } catch (error) {
           console.log("error in index.tsx. Caused by " + error);
         }
-      } else if (language === "korean") {
+      } else if (word === "hangul") {
         try {
           const result = await db.getAllAsync(
             "SELECT 'korean' as language,word.id,korean.hangul AS word,korean.romaji AS phonetic,translation,isFavorite from word JOIN korean ON korean.word_id = word.id WHERE hangul LIKE $search;",
@@ -141,14 +141,20 @@ export default function Index() {
         } catch (error) {
           console.log("error in index.tsx.Caused by " + error);
         }
-      } else {
+      } else if(word === "kenji") {
         try {
-          const result = await db.getAllAsync(
+          const jpResult = await db.getAllAsync(
+            "SELECT 'japanese' as language,word.id,japanese.kanji AS word,japanese.hiragana AS phonetic,word.translation,isFavorite from word JOIN japanese ON japanese.word_id = word.id WHERE hiragana LIKE $search OR kanji LIKE $search;",
+            { $search: `${searchWord}%` }
+          );
+          const cnResult = await db.getAllAsync(
             "SELECT 'chinese' as language,word.id,chinese.pinyin AS phonetic,chinese.hanzi AS word,word.translation,isFavorite from word JOIN chinese ON chinese.word_id = word.id WHERE hanzi LIKE $search",
             { $search: `${searchWord}%` }
           );
 
-          setData([...result]);
+         
+          setData([...jpResult,...cnResult]);
+
         } catch (error) {
           console.log("error in index.tsx.Caused by " + error);
         }
@@ -156,7 +162,7 @@ export default function Index() {
     }
 
     async function run() {
-      await getSearchData(detectLanguage(searchWord));
+      await getSearchData(detectWord(searchWord));
     }
     run();
   }, [searchWord]);
@@ -181,17 +187,6 @@ export default function Index() {
       className="flex-1"
       style={{ backgroundColor: theme.primaryColor }}
     >
-      {/* <Image
-        source={require("@/assets/images/dictionary.png")}
-        style={{
-          width: 150,
-          height: 150,
-          position: "absolute",
-          top: "20%",
-          left: "30%",
-          zIndex: -1,
-        }}
-      /> */}
       <StatusBar
         backgroundColor={
           isModalVisible ? theme.faintedColor : theme.primaryColor
