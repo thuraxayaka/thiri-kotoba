@@ -1,45 +1,64 @@
 import { DrawerNavigationProp } from "@react-navigation/drawer";
 import { useNavigation as useNativeNavigation } from "expo-router";
-interface BaseWord {
-  id: number;
-  level: string;
-  type: PartsOfSpeech;
-  translation: string;
-  definition: string;
-  category: string;
-  formality: Formality;
-}
 export interface Example {
   sentence: string;
-  phonetic: string;
+  pronunciation: string;
   translation: string;
 }
-interface JapaneseWord extends BaseWord {
+interface JapaneseWord {
+  word: string;
+  parts_of_speech: string;
+  categories: string[] | string;
+  english: string;
+  burmese: string;
+  definition?: string;
+  level: string;
+  formality: Formality;
+  pronunciation: string;
+  romaji: string;
   language: "japanese";
-  kanji: string;
-  hiragana: string;
-  romaji: string;
-  synonyms?: string[];
-  antonyms?: string[];
-  formality: Formality;
+  synonyms?: string[] | string;
+  antonyms?: string[] | string;
+  frequencey: Frequency;
+  favorite: boolean;
   examples: Example[];
 }
-interface ChineseWord extends BaseWord {
+interface ChineseWord {
+  word: string;
+  parts_of_speech: string;
+  categories: string[] | string;
+  english: string;
+  burmese: string;
+  definition?: string;
+  level: string;
+  formality: Formality;
+  pronunciation: string;
   language: "chinese";
-  hanzi: string;
-  pinyin: string;
+  synonyms?: string[] | string;
+  antonyms?: string[] | string;
+  frequencey: Frequency;
+  favorite: boolean;
   examples: Example[];
-  formality: Formality;
 }
 
-interface KoreanWord extends BaseWord {
+interface KoreanWord {
+  word: string;
+  parts_of_speech: string;
+  categories: string[] | string;
+  english: string;
+  burmese: string;
+  definition?: string;
+  level: string;
+  formality: Formality;
+  pronunciation: string;
   language: "korean";
-  hangul: string;
-  romaji: string;
+  synonyms?: string[] | string;
+  antonyms?: string[] | string;
+  frequencey: Frequency;
+  favorite: boolean;
   examples: Example[];
-  formality: Formality;
 }
-
+export type Frequency = "high" | "medium" | "low" | "very_low";
 interface WordDetails {
   word: Word;
   examples: Example[];
@@ -81,6 +100,27 @@ export type Formality =
 export type stepMapper = {
   [key: number]: JSX.Element;
 };
-export type ChineseLevel = "HSK 1" | "HSK 2" | "HSK 3" | "HSK 4" | "HSK 5" | "HSK 6";
-export type JapaneseLevel = "JLPT N5" | "JLPT N4" | "JLPT N3" | "JLPT N2" | "JLPT N1"
-export type KoreanLevel = "TOPIK 1" | "TOPIK 2" | "TOPIK 3" | "TOPIK 4" | "TOPIK 5" | "TOPIK 6"
+export type ChineseLevel =
+  | "HSK 1"
+  | "HSK 2"
+  | "HSK 3"
+  | "HSK 4"
+  | "HSK 5"
+  | "HSK 6";
+export type JapaneseLevel =
+  | "JLPT N5"
+  | "JLPT N4"
+  | "JLPT N3"
+  | "JLPT N2"
+  | "JLPT N1";
+export type KoreanLevel =
+  | "TOPIK 1"
+  | "TOPIK 2"
+  | "TOPIK 3"
+  | "TOPIK 4"
+  | "TOPIK 5"
+  | "TOPIK 6";
+export type SelectListItem<T> = {
+  key: string | number;
+  value: T;
+};

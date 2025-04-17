@@ -76,13 +76,14 @@ const formSlice = createSlice({
 
       // console.log(state.requiredFields);
     },
-    removeRequiredFields(state,action: PayloadAction<any>) {
-      
-      const filteredKeys = Object.keys(state.requiredFields).filter((value) => value !== action.payload);
-      let updatedStates:Map<string> = {};
+    removeRequiredFields(state, action: PayloadAction<any>) {
+      const filteredKeys = Object.keys(state.requiredFields).filter(
+        (value) => value !== action.payload
+      );
+      let updatedStates: Map<string> = {};
       filteredKeys.forEach((key) => {
-        return updatedStates[key] = state.requiredFields[key]
-      })
+        return (updatedStates[key] = state.requiredFields[key]);
+      });
 
       state.requiredFields = updatedStates;
     },
@@ -90,6 +91,8 @@ const formSlice = createSlice({
       (state.chinese = {}),
         (state.korean = {}),
         (state.japanese = {}),
+        (state.requiredFields = {}),
+        (state.isSubmitted = false),
         (state.language = "japanese");
     },
   },
@@ -106,6 +109,6 @@ export const {
   updateAll,
   setSubmitted,
   setRequiredFields,
-  removeRequiredFields
+  removeRequiredFields,
 } = formSlice.actions;
 export default formSlice.reducer;

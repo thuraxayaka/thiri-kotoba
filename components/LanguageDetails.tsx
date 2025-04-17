@@ -1,40 +1,36 @@
-import { StyleSheet, Text, TouchableHighlight, View } from "react-native";
-import React, { useEffect, useMemo } from "react";
+import { Text, TouchableHighlight, TouchableOpacity, View } from "react-native";
+import React, { useEffect } from "react";
 import { useTheme } from "@/hooks/Theme";
-import AntDesign from "@expo/vector-icons/AntDesign";
 import { SafeAreaView } from "react-native-safe-area-context";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
+import Feather from "@expo/vector-icons/Feather";
 import useSpeech from "@/hooks/Speech";
 import { Map } from "@/types";
 
 interface Props {
   word: string;
-  type: string;
+  partsOfSpeech: string;
   level: string;
   reading: string;
   romaji?: string;
   formality: string;
-  handleSelectedLanguage: (idx: number) => void;
+  categories: string[] | string;
   selectedLanguage: string;
-  handleEdit: ([...args]: Map<string>[]) => void;
 }
 
 const WordDetails = ({
   word,
-  type,
+  partsOfSpeech,
   level,
   reading,
   romaji,
   formality,
+  categories,
   selectedLanguage,
-  handleEdit,
-  handleSelectedLanguage,
 }: Props) => {
   const theme = useTheme();
   const { speak } = useSpeech();
 
-  const partsOFSpeech: Map<string> = {
+  const partsOfSpeechType: Map<string> = {
     noun: "(n)",
     adjective: "(adj)",
     adverb: "(adv)",
@@ -47,11 +43,10 @@ const WordDetails = ({
   const handleSpeech = () => {
     speak(selectedLanguage, word);
   };
-  const indexMapper: Record<string, number> = {
-    japanese: 0,
-    chinese: 1,
-    korean: 2,
-  };
+  const [tags, setTags] = React.useState<string[]>([]);
+  useEffect(() => {
+    if (Array.isArray(categories)) setTags(categories);
+  }, []);
 
   return (
     <SafeAreaView edges={["bottom", "left", "right"]}>
@@ -67,59 +62,38 @@ const WordDetails = ({
               </Text>
               <View className="flex-row gap-2 items-end">
                 <Text style={{ color: theme.mutedColor }}>
-                  {partsOFSpeech[type]}
+                  {partsOfSpeechType[partsOfSpeech]}
                 </Text>
               </View>
             </View>
-            <View className="flex-row  items-center">
+            <View className="flex-row items-center gap-2">
               <TouchableHighlight
                 onPress={handleSpeech}
                 underlayColor={theme.faintedColor}
                 style={{ borderRadius: 10, padding: 8 }}
               >
-                <AntDesign
-                  name="sound"
-                  className="self-start"
-                  size={28}
-                  color={theme.accentColor}
-                />
+                <Feather name="volume-2" size={24} color="black" />
               </TouchableHighlight>
               <TouchableHighlight
-                onPress={() =>
-                  handleSelectedLanguage(indexMapper[selectedLanguage])
-                }
                 underlayColor={theme.faintedColor}
-                style={{ borderRadius: 10, padding: 8 }}
-              >
-                <MaterialCommunityIcons
-                  name="translate"
-                  size={28}
-                  color={theme.textColor}
-                />
-              </TouchableHighlight>
-              <TouchableHighlight
-                onPress={() => {
-                  const arr: Map<string>[] = [];
-                  arr.push({ word });
-                  arr.push({ phonetic: reading });
-                  if (romaji) arr.push({ romaji });
-                  handleEdit([...arr]);
+                style={{
+                  padding: 5,
+                  borderRadius: 5,
                 }}
-                underlayColor={theme.faintedColor}
-                style={{ borderRadius: 10, padding: 8 }}
+                onPress={() => {}}
               >
-                <FontAwesome
-                  name="pencil-square-o"
-                  size={28}
-                  color={theme.textColor}
-                />
+                <Feather name="edit" size={20} color="black" />
               </TouchableHighlight>
             </View>
           </View>
           <View className="flex-row items-center justify-between gap-4">
             <View>
-              <Text style={{ color: theme.mutedColor,fontWeight: 'bold' }}>{reading}</Text>
-              <Text style={{ color: theme.mutedColor }}>{romaji}</Text>
+              <Text style={{ color: theme.mutedColor, fontWeight: "bold" }}>
+                {reading}
+              </Text>
+              {romaji && (
+                <Text style={{ color: theme.mutedColor }}>{romaji}</Text>
+              )}
             </View>
             <View className="flex-row gap-1">
               {formality === "neutral" && (
@@ -131,6 +105,19 @@ const WordDetails = ({
                 {level}
               </Text>
             </View>
+          </View>
+          <View className="flex-row items-center gap-2 mt-4">
+            <Text className="flex items-center">Tags:</Text>
+            {tags.map((tag, i) => {
+              return (
+                <View className="flex-row items-center" key={i}>
+                  <TouchableOpacity onPress={() => {}}>
+                    <Text className="underline">{tag}</Text>
+                  </TouchableOpacity>
+                  {i !== tags.length - 1 && <Text>,</Text>}
+                </View>
+              );
+            })}
           </View>
         </View>
       </View>

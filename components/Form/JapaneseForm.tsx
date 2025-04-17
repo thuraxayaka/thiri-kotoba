@@ -4,76 +4,66 @@ import {
   TextInput,
   Animated,
   TouchableOpacity,
+  Easing,
+  Alert,
 } from "react-native";
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { SelectList } from "react-native-dropdown-select-list";
-import AntDesign from "@expo/vector-icons/AntDesign";
+import Feather from "@expo/vector-icons/Feather";
 
 import { useTheme } from "@/hooks/Theme";
-import { PartsOfSpeech, Formality, stepMapper,JapaneseLevel } from "@/types"
+import {
+  PartsOfSpeech,
+  Formality,
+  stepMapper,
+  JapaneseLevel,
+  Frequency,
+  SelectListItem,
+} from "@/types";
 import { useSqlite } from "@/hooks/Database";
-// import { useSQLiteContext } from "expo-sqlite";
-
 import { useAppDispatch, useAppSelector } from "@/hooks/Hook";
 import {
   setShouldScrollToStart,
   updateJapaneseWord,
   setSubmitted,
   setRequiredFields,
+  setIsModalVisible,
 } from "@/stores/formSlice";
 import ExampleForm from "./ExampleForm";
 import { RootState } from "@/stores/store";
-type SelectListPartsOfSpeech = {
-  key: string | number;
-  value: PartsOfSpeech;
-};
-type SelectListFormality = {
-  key: string | number;
-  value: Formality;
-};
-type SelectListLevel = {
-  key: number;
-  value: JapaneseLevel
-}
-
 const JapaneseForm = () => {
-  // const db = useSQLiteContext();
   const totalSteps = 2;
   const japaneseSel = useAppSelector((state: RootState) => state.form.japanese);
   const isSubmitted = useAppSelector(
     (state: RootState) => state.form.isSubmitted
   );
-  const {addToTable }  = useSqlite();
-
-  const requiredFields = useAppSelector((state : RootState ) =>  state.form.requiredFields);
- 
+  const theme = useTheme();
+  const { insertData } = useSqlite();
+  const requiredFields = useAppSelector(
+    (state: RootState) => state.form.requiredFields
+  );
 
   const dispatch = useAppDispatch();
-  const [kanji, setKanji] = useState<string>(japaneseSel.kanji || "");
-  const [hiragana, setHiragana] = useState<string>(japaneseSel.hiragana || "");
+  const [word, setWord] = useState<string>(japaneseSel.word || "");
+  const [pronunciation, setProununciation] = useState<string>(
+    japaneseSel.pronunciation || ""
+  );
   const [romaji, setRomaji] = useState<string>(japaneseSel.romaji || "");
   const [selectedPartsOfSpeech, setSelectedPartsOfSpeech] =
     React.useState<PartsOfSpeech>("noun");
   const [selectedFormality, setSelectedFormality] =
     useState<Formality>("neutral");
 
-  const [burmeseMeaning, setBurmeseMeaning] = useState<string>(
-    japaneseSel.translation || ""
-  );
-  const [englishMeaning, setEnglishMeaning] = useState<string>(
-    japaneseSel.definition || ""
-  );
-  const [category, setCategory] = useState<string>(japaneseSel.category || "");
-
-  const [level,setLevel] = useState<JapaneseLevel>("JLPT N5");
+  const [burmese, setBurmese] = useState<string>(japaneseSel.burmese || "");
+  const [english, setEnglish] = useState<string>(japaneseSel.definition || "");
+  const [definition, setDefinition] = useState<string>("");
+  const [categories, setCategories] = useState<string>("");
+  const [level, setLevel] = useState<JapaneseLevel>("JLPT N5");
   const [currentStep, setCurrentStep] = useState<number>(1);
-  
-
-  const partsOfSpeech: SelectListPartsOfSpeech[] = [
+  const [frequency, setFrequency] = useState<Frequency>("medium");
+  const [synonyms, setSynonyms] = useState<string>("");
+  const [antonyms, setAntonyms] = useState<string>("");
+  const partsOfSpeech: SelectListItem<PartsOfSpeech>[] = [
     {
       key: "1",
       value: "noun",
@@ -107,7 +97,7 @@ const JapaneseForm = () => {
       value: "interjection",
     },
   ];
-  const formality: SelectListFormality[] = [
+  const formality: SelectListItem<Formality>[] = [
     {
       key: "1",
       value: "formal",
@@ -133,213 +123,298 @@ const JapaneseForm = () => {
       value: "rude",
     },
   ];
-const levels: SelectListLevel[] =  [
+  const levels: SelectListItem<JapaneseLevel>[] = [
     {
       key: 1,
-      value: "JLPT N5"
+      value: "JLPT N5",
     },
- 
+
     {
       key: 2,
-      value: "JLPT N4"
+      value: "JLPT N4",
     },
-  
+
     {
       key: 3,
-      value: "JLPT N3"
+      value: "JLPT N3",
     },
- 
+
     {
       key: 4,
-      value: "JLPT N2"
+      value: "JLPT N2",
     },
 
     {
       key: 5,
-      value: "JLPT N1"
+      value: "JLPT N1",
     },
-  ]
-  
+  ];
+  const frequencies: SelectListItem<Frequency>[] = [
+    {
+      key: 1,
+      value: "very_low",
+    },
+    {
+      key: 2,
+      value: "low",
+    },
+    {
+      key: 3,
+      value: "medium",
+    },
+    {
+      key: 4,
+      value: "high",
+    },
+  ];
+
   const inputs = [
     {
       label: "Kanji",
       fieldName: "kanji",
-      placeholder: "Enter kanji",
-      value: kanji,
-      onChangeText: setKanji,
+      placeholder: "eg. 赤",
+      value: word,
+      onChangeText: setWord,
     },
     {
       label: "Hiragana/Furigana",
       fieldName: "hiragana",
-      placeholder: "Enter hiragana or furigana",
-      value: hiragana,
-      onChangeText: setHiragana,
+      placeholder: "eg. あか",
+      value: pronunciation,
+      onChangeText: setProununciation,
     },
     {
       label: "Romaji",
-      placeholder: "Enter romaji",
+      placeholder: "eg. aka",
       fieldName: "romaji",
       value: romaji,
       onChangeText: setRomaji,
     },
 
     {
-      label: "Burmese Meaning",
-      placeholder: "Enter burmese meaning",
+      label: "Burmese",
+      placeholder: "eg. အနီရောင်",
       fieldName: "burmese",
-      value: burmeseMeaning,
-      onChangeText: setBurmeseMeaning,
+      value: burmese,
+      onChangeText: setBurmese,
     },
     {
-      label: "English Meaning",
-      placeholder: "Enter english meaning",
+      label: "English",
+      placeholder: "eg. red",
       fieldName: "english",
-      value: englishMeaning,
-      onChangeText: setEnglishMeaning,
+      value: english,
+      onChangeText: setEnglish,
     },
+    {
+      label: "Definition in English(Optional)",
+      placeholder: "e.g the color red",
+      fieldName: "definition",
+      value: definition,
+      onChangeText: setDefinition,
+      optional: true,
+    },
+
     {
       label: "Category",
-      placeholder: "Enter category",
-      fieldName: "category",
-      value: category,
-      onChangeText: setCategory,
-    }
+      placeholder: "eg. colors,symbols",
+      fieldName: "categories",
+      value: categories,
+      onChangeText: setCategories,
+    },
+    {
+      label: "Synonyms(Optional)",
+      placeholder: "eg. 真紅,レッド",
+      fieldName: "synonyms",
+      value: synonyms,
+      onChangeText: setSynonyms,
+      optional: true,
+    },
+    {
+      label: "Antonyms(Optional)",
+      placeholder: "eg. 黒,青",
+      fieldName: "antonyms",
+      value: antonyms,
+      onChangeText: setAntonyms,
+      optional: true,
+    },
   ];
-
-  const inputsAnim = useMemo(
-    () => Array.from({ length: 6 }, () => new Animated.Value(0)),
-    []
-  );
+  //restore previous state data
   useEffect(() => {
-    Animated.stagger(
-      150,
-      Array.from({ length: 6 }, (_, index) =>
-        Animated.spring(inputsAnim[index], {
-          toValue: 1,
-          useNativeDriver: true,
-          speed: 15,
-        })
-      )
-    ).start();
+    const categories = japaneseSel.categories;
+    if (Array.isArray(categories)) {
+      setCategories(categories.join(","));
+    }
   }, []);
-
+  //update data as user type
   useEffect(() => {
     const japaneseData = {
-      kanji,
-      hiragana,
+      word,
+      pronunciation,
       romaji,
       level,
-      type: selectedPartsOfSpeech,
-      translation: burmeseMeaning,
-      definition: englishMeaning,
-      category,
+      partsOfSpeech: selectedPartsOfSpeech,
+      burmese,
+      english,
+      definition,
+      categories,
       formality: selectedFormality,
+      synonyms,
+      antonyms,
+      frequency,
     };
+
     if (isSubmitted) {
       //hide error when user start typing
       dispatch(setSubmitted(false));
     }
+    updateRequiredFields();
     dispatch(updateJapaneseWord({ language: "japanese", ...japaneseData }));
   }, [
-    kanji,
-    hiragana,
+    word,
+    pronunciation,
     romaji,
     selectedPartsOfSpeech,
     level,
-    burmeseMeaning,
-    englishMeaning,
-    category,
+    burmese,
+    english,
+    definition,
+    categories,
     selectedFormality,
+    frequency,
+    antonyms,
+    synonyms,
   ]);
-
-  useEffect(() => {
-    async function isAllInputsValid(): Promise<boolean> {
-      if(isSubmitted) {
-        let isInputsRequired = Object.entries(requiredFields).some(([key,value],index) => {
-          if(typeof value === "string" && value === 'required') {
-            return true;
-          }
-          if(typeof value === 'object') {
-            for([key,value] of Object.entries(value)) {
-              if(typeof value === 'string' && value === 'required') {
-                return true;
-              }
+  //check required fields
+  const isAllInputsValid = (): boolean => {
+    let isInputsRequired = Object.entries(requiredFields).some(
+      ([key, value]) => {
+        if (typeof value === "string" && value === "required") {
+          console.log("required key:" + key);
+          return true;
+        }
+        if (typeof value === "object") {
+          for (const [nestedKey, nestedValue] of Object.entries(value)) {
+            if (typeof nestedValue === "string" && nestedValue === "required") {
+              console.log("required key in nested:" + key + "." + nestedKey);
+              return true;
             }
           }
-          return false;
-        })
-
-        return !isInputsRequired;
-      }
-      return false;
-    }
-    async function run() {
-      const isValid = await isAllInputsValid();
-      console.log(japaneseSel)
-      if(isValid) {
-        const {success,lastInsertRow} =await addToTable(japaneseSel)
-        if(success) {
-          console.log("Added word successfully....")
-          console.log("Last Insert RowId : " + lastInsertRow)
-
         }
+        console.log("no required found");
+        return false;
       }
-    }
+    );
 
-    run();
-  },[isSubmitted])
+    return !isInputsRequired;
+  };
 
+  const updateRequiredFields = () => {
+    inputs.forEach(({ fieldName, optional }, i) => {
+      if (optional) return;
+      const value = inputs[i].value;
+      if (requiredFields[fieldName] === undefined) {
+        dispatch(setRequiredFields({ [fieldName]: "required" }));
+      } else {
+        dispatch(
+          setRequiredFields({
+            [fieldName]: value === "" ? "required" : "",
+          })
+        );
+      }
+    });
+  };
 
-  const theme = useTheme();
+  //Animation Setup
+  const inputBoxCount = inputs.length;
+  const selectBoxCount = 4;
+  const totalAnimationCount = inputBoxCount + selectBoxCount;
+  const allAnimationRefs = useRef(
+    [...Array(totalAnimationCount)].map(() => new Animated.Value(0))
+  ).current;
+
+  useEffect(() => {
+    const animations = allAnimationRefs.map((val) => {
+      return Animated.timing(val, {
+        useNativeDriver: true,
+        toValue: 1,
+        easing: Easing.out(Easing.ease),
+      });
+    });
+    Animated.stagger(150, animations).start();
+  }, [allAnimationRefs]);
+
+  const getAnimationStyle = (animValue: Animated.Value) => {
+    return {
+      opacity: animValue,
+      transform: [
+        {
+          translateY: animValue.interpolate({
+            inputRange: [0, 1],
+            outputRange: [-40, 0],
+          }),
+        },
+      ],
+    };
+  };
 
   const stepMap: stepMapper = {
     1: (
       <View>
-        {inputsAnim.map((input, index) => (
-          <Animated.View
-            key={index}
-            style={{
-              opacity: input,
-              transform: [
-                {
-                  translateY: input.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [-40, 0],
-                  }),
-                },
-              ],
-            }}
-          >
+        {inputs.map((input, i) => (
+          <Animated.View key={i} style={getAnimationStyle(allAnimationRefs[i])}>
             <InputBox
-              fieldName={inputs[index].fieldName}
-              label={inputs[index].label}
-              placeholder={isSubmitted ? "please fill out this field" : ""}
-              value={inputs[index].value}
-              onChangeText={inputs[index].onChangeText}
+              fieldName={input.fieldName}
+              label={input.label}
+              placeholder={input.placeholder}
+              value={input.value}
+              onChangeText={input.onChangeText}
             />
           </Animated.View>
         ))}
-        <SelectBox<Formality>
-          label="formality"
-          data={formality}
-          onSelected={setSelectedFormality}
-          value={selectedFormality}
-          fieldName="formality"
-        />
-        <SelectBox<PartsOfSpeech>
-          label="parts of speech"
-          data={partsOfSpeech}
-          onSelected={setSelectedPartsOfSpeech}
-          value={selectedPartsOfSpeech}
-          fieldName="partsOfSpeech"
-        />
-        <SelectBox<JapaneseLevel>
-          label="level"
-          data={levels}
-          onSelected={setLevel}
-          value={level}
-          fieldName="level"
-        />
+        <Animated.View
+          style={getAnimationStyle(allAnimationRefs[inputBoxCount])}
+        >
+          <SelectBox<Frequency>
+            label="Frequency"
+            data={frequencies}
+            onSelected={setFrequency}
+            value={frequency}
+            fieldName="frequency"
+          />
+        </Animated.View>
+        <Animated.View
+          style={getAnimationStyle(allAnimationRefs[inputBoxCount + 1])}
+        >
+          <SelectBox<Formality>
+            label="formality"
+            data={formality}
+            onSelected={setSelectedFormality}
+            value={selectedFormality}
+            fieldName="formality"
+          />
+        </Animated.View>
+        <Animated.View
+          style={getAnimationStyle(allAnimationRefs[inputBoxCount + 2])}
+        >
+          <SelectBox<PartsOfSpeech>
+            label="parts of speech"
+            data={partsOfSpeech}
+            onSelected={setSelectedPartsOfSpeech}
+            value={selectedPartsOfSpeech}
+            fieldName="parts_of_speech"
+          />
+        </Animated.View>
+        <Animated.View
+          style={getAnimationStyle(allAnimationRefs[inputBoxCount + 3])}
+        >
+          <SelectBox<JapaneseLevel>
+            label="level"
+            data={levels}
+            onSelected={setLevel}
+            value={level}
+            fieldName="level"
+          />
+        </Animated.View>
       </View>
     ),
     2: (
@@ -360,7 +435,7 @@ const levels: SelectListLevel[] =  [
           }}
           className={currentStep === 1 ? "opacity-0" : "opacity-1"}
         >
-          <AntDesign name="left" size={24} color="black" />
+          <Feather name="chevron-left" size={28} color={theme.textColor} />
         </TouchableOpacity>
         <Text>
           {currentStep} / {totalSteps}
@@ -376,7 +451,7 @@ const levels: SelectListLevel[] =  [
               : "opacity-1"
           }
         >
-          <AntDesign name="right" size={24} color="black" />
+          <Feather name="chevron-right" size={28} color={theme.textColor} />
         </TouchableOpacity>
       </View>
       {currentStep === totalSteps && (
@@ -386,10 +461,23 @@ const levels: SelectListLevel[] =  [
             style={{
               backgroundColor: theme.accentColor,
             }}
-            onPress={() => {
-              dispatch(setShouldScrollToStart(true));
+            onPress={async () => {
               dispatch(setSubmitted(true));
-              
+              updateRequiredFields();
+              const isValid = isAllInputsValid();
+              if (!isValid) {
+                Alert.alert(
+                  "Required Fields Are Missing",
+                  "Please fill out all required fields to proceed next."
+                );
+              } else {
+                const { success, lastInsertRow } = await insertData(
+                  japaneseSel
+                );
+                if (success) {
+                  dispatch(setIsModalVisible(false));
+                }
+              }
             }}
           >
             <Text
@@ -406,29 +494,29 @@ const levels: SelectListLevel[] =  [
     </View>
   );
 };
-type SelectBoxProps<T extends PartsOfSpeech | Formality | JapaneseLevel> = {
+type SelectBoxProps<T> = {
   label: string;
   onSelected: React.Dispatch<React.SetStateAction<T>>;
-  data: SelectListPartsOfSpeech[] | SelectListFormality[] | SelectListLevel[];
+  data: SelectListItem<T>[];
   fieldName: string;
   value: string;
 };
-const SelectBox = <T extends PartsOfSpeech | Formality | JapaneseLevel>({
+function SelectBox<T>({
   label,
   onSelected,
   data,
   fieldName,
   value,
-}: SelectBoxProps<T>) => {
+}: SelectBoxProps<T>) {
   const japaneseSel = useAppSelector((state: RootState) => state.form.japanese);
   const [selected, setSelected] = React.useState<string[]>([]);
   React.useEffect(() => {
     if (japaneseSel?.formality !== undefined)
       setSelected((prev) => [...prev, "formality"]);
-    if (japaneseSel?.type !== undefined)
+    if (japaneseSel?.parts_of_speech !== undefined)
       setSelected((prev) => [...prev, "partsOfSpeech"]);
-    if( japaneseSel?.level !== undefined) 
-      setSelected((prev) => [...prev,"level"]);
+    if (japaneseSel?.level !== undefined)
+      setSelected((prev) => [...prev, "level"]);
   }, [japaneseSel]);
 
   const isSubmitted = useAppSelector(
@@ -467,18 +555,13 @@ const SelectBox = <T extends PartsOfSpeech | Formality | JapaneseLevel>({
       />
       {isSubmitted && !isUserSelected && (
         <View className="gap-1 flex-row items-center">
-          <AntDesign
-            name="exclamationcircle"
-            size={12}
-            color={theme.dangerColor}
-            className="text-rose-400"
-          />
+          <Feather name="alert-triangle" size={24} color={theme.dangerColor} />
           <Text className="text-red-400 text-sm">Required</Text>
         </View>
       )}
     </View>
   );
-};
+}
 type InputBoxProps = {
   label: string;
   placeholder: string;
@@ -502,28 +585,17 @@ const InputBox = ({
     (state: RootState) => state.form.requiredFields
   );
 
-  const dispatch = useAppDispatch();
   const theme = useTheme();
-  useEffect(() => {
-    if (isSubmitted) {
-      if (requiredFields[fieldName] === undefined) {
-        dispatch(setRequiredFields({ [fieldName]: "required" }));
-      } else {
-        dispatch(
-          setRequiredFields({
-            [fieldName]: value === "" ? "required" : "",
-          })
-        );
-      }
-    }
-  }, [isSubmitted]);
+
   return (
     <View className="w-full  mb-4 gap-1">
       <Text className="text-sm" style={{ color: theme.mutedColor }}>
         {label}
       </Text>
       <TextInput
-        placeholderTextColor={value ? theme.mutedColor : theme.dangerColor}
+        selectionColor={theme.dangerColor}
+        cursorColor={theme.faintedColor}
+        placeholderTextColor={theme.faintedColor}
         style={{
           backgroundColor: theme.secondaryColor,
           color: theme.textColor,
@@ -533,21 +605,16 @@ const InputBox = ({
         onChangeText={(text) => {
           onChangeText(text);
         }}
-        className={`rounded-lg h-14 px-4 ${
+        className={`rounded-lg min-h-[40px] px-4 ${
           requiredFields[fieldName] === "required" && isSubmitted
             ? "border"
             : ""
         }`}
-        // placeholder={placeholder}
+        placeholder={placeholder}
       />
       {isSubmitted && requiredFields[fieldName] === "required" && (
         <View className="gap-1 flex-row items-center">
-          <AntDesign
-            name="exclamationcircle"
-            size={12}
-            color={theme.dangerColor}
-            className="text-rose-400"
-          />
+          <Feather name="alert-triangle" size={14} color={theme.dangerColor} />
           <Text className="text-red-400 text-sm">Required</Text>
         </View>
       )}

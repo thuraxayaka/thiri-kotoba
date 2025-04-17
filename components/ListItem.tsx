@@ -1,6 +1,5 @@
 import React from "react";
-import { Text, View, TouchableHighlight, Image } from "react-native";
-import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import { Text, View, TouchableHighlight } from "react-native";
 import { useTheme } from "@/hooks/Theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSQLiteContext } from "expo-sqlite";
@@ -8,7 +7,7 @@ import { Map } from "@/types";
 type props = {
   id: number;
   word: string;
-  phonetic: string;
+  pronunciation: string;
   translation: string;
   onPress: any;
   language: string;
@@ -18,7 +17,7 @@ type props = {
 const ListItem = ({
   id,
   word,
-  phonetic,
+  pronunciation,
   translation,
   onPress,
   language,
@@ -46,52 +45,48 @@ const ListItem = ({
     }
   };
 
-  const languageText:Map<string> = {
-    "japanese": "JP",
-    "chinese" : "CN",
-    "korean" : "KR"
-  }
+  const languageText: Map<string> = {
+    japanese: "JP",
+    chinese: "CN",
+    korean: "KR",
+  };
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView>
-        <TouchableHighlight
-          underlayColor={theme.secondaryColor}
-          style={{ backgroundColor: theme.primaryColor }}
-          onPress={handlePress}
-        >
-          <View className="flex-row items-center justify-between">
-            <View className="flex justify-center gap-2 mt-2  items-start">
-              <View className="flex flex-row  gap-2 items-center">
-                
-                <Text className="font-bold">[{languageText[language]}]</Text>
-                <View className='flex-row items-center'>
-                <Text>{word}</Text>
-                <Text className="text-sm" style={{color: theme.mutedColor}}>({phonetic})</Text>
-
-                </View>
-              </View>
-              <View className="mb-2">
-                <Text>{translation}</Text>
-              </View>
-            </View>
-            <View>
-              <TouchableHighlight
-                underlayColor={theme.faintedColor}
-                onPress={handleFavorite}
-                className="rounded-full p-2"
-              >
-                <Ionicons
-                  name={favorite ? "heart" : "heart-outline"}
-                  size={24}
-                  color={favorite ? theme.accentColor : theme.faintedColor}
-                />
-              </TouchableHighlight>
+    <TouchableHighlight
+      underlayColor={theme.secondaryColor}
+      style={{ backgroundColor: theme.primaryColor, height: 60 }}
+      onPress={handlePress}
+    >
+      <View className="flex-row items-center justify-between">
+        <View className="flex justify-center gap-2 mt-2  items-start">
+          <View className="flex flex-row  gap-2 items-center">
+            <Text className="font-bold">[{languageText[language]}]</Text>
+            <View className="flex-row items-center">
+              <Text>{word}</Text>
+              <Text className="text-sm" style={{ color: theme.mutedColor }}>
+                ({pronunciation})
+              </Text>
             </View>
           </View>
-        </TouchableHighlight>
-      </SafeAreaView>
-    </SafeAreaProvider>
+          <View className="mb-2">
+            <Text>{translation}</Text>
+          </View>
+        </View>
+        <View>
+          <TouchableHighlight
+            underlayColor={theme.faintedColor}
+            onPress={handleFavorite}
+            className="rounded-full p-2"
+          >
+            <Ionicons
+              name={favorite ? "heart" : "heart-outline"}
+              size={24}
+              color={favorite ? theme.accentColor : theme.faintedColor}
+            />
+          </TouchableHighlight>
+        </View>
+      </View>
+    </TouchableHighlight>
   );
 };
 

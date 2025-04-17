@@ -1,0 +1,88 @@
+[
+  {
+    "id": 1000,
+    "word": "선생님",
+    "partsOfSpeech": "noun",
+    "categories": ["occupation", "people", "honorifics"],
+    "english": "Teacher",
+    "burmese": "ဆရာ/ဆရာမ",
+    "definition": "A person who teaches, especially in a school; also used as a general term of respect for professionals or elders.",
+    "language": "korean",
+    "level": "TOPIK1",
+    "formality": "formal",
+    "romaji": "seon saeng nim",
+    "synonyms": ["교사"],
+    "antonyms": ["학생"],
+    "frequency": "high",
+    "examples": [
+      {
+        "sentence": "선생님, 질문 있어요.",
+        "pronunciation": "Seonsaengnim, jilmun isseoyo.",
+        "translation": "Teacher, I have a question."
+      },
+      {
+        "sentence": "우리 선생님은 정말 친절해요.",
+        "pronunciation": "Uri seonsaengnimeun jeongmal chinjeolhaeyo.",
+        "translation": "Our teacher is really kind."
+      },
+      {
+        "sentence": "김 선생님께 이메일을 보냈어요.",
+        "pronunciation": "Gim seonsaengnimkke imeil-eul bonaesseoyo.",
+        "translation": "I sent an email to Mr./Ms. Kim (Teacher Kim)."
+      },
+      {
+        "sentence": "선생님 덕분에 한국어를 잘하게 됐어요.",
+        "pronunciation": "Seonsaengnim deokbune hangug-eoreul jalhage dwaesseoyo.",
+        "translation": "Thanks to you, teacher, I became good at Korean."
+      },
+      {
+        "sentence": "의사 선생님, 잠깐 시간 있으세요?",
+        "pronunciation": "Uisa seonsaengnim, jamkkan sigan isseuseyo?",
+        "translation": "Doctor (polite address), do you have a moment?"
+      }
+    ]
+  },
+  {
+    "id": 1001,
+    "word": "학생",
+    "partsOfSpeech": "noun",
+    "categories": ["people", "education", "role"],
+    "english": "Student",
+    "burmese": "ကျောင်းသား/သူ",
+    "definition": "A person who is studying, typically at a school, college, or university.",
+    "language": "korean",
+    "level": "TOPIK1",
+    "formality": "informal",
+    "romaji": "hak ssaeng",
+    "synonyms": [],
+    "antonyms": ["선생님", "교사"],
+    "frequency": "high",
+    "examples": [
+      {
+        "sentence": "저는 학생입니다.",
+        "pronunciation": "Jeoneun haksaeng-imnida.",
+        "translation": "I am a student."
+      },
+      {
+        "sentence": "이 학교에는 학생들이 많아요.",
+        "pronunciation": "I hakgyo-eneun haksaengdeuri manayo.",
+        "translation": "There are many students in this school."
+      },
+      {
+        "sentence": "학생들은 열심히 공부해야 해요.",
+        "pronunciation": "Haksaengdeureun yeolsimhi gongbuhaeya haeyo.",
+        "translation": "Students must study hard."
+      },
+      {
+        "sentence": "그녀는 모범 학생이에요.",
+        "pronunciation": "Geunyeoneun mobeom haksaeng-ieyo.",
+        "translation": "She is a model student."
+      },
+      {
+        "sentence": "학생 할인이 되나요?",
+        "pronunciation": "Haksaeng harini doenayo?",
+        "translation": "Is there a student discount?"
+      }
+    ]
+  }
+]

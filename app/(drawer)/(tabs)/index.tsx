@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Text, View, FlatList, StyleSheet, Image } from "react-native";
+import { View, Text } from "react-native";
 import { useDictionary, useInitializiedWords } from "@/hooks/Dictionary";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNetwork } from "@/hooks/Network";
 import ListItem from "@/components/ListItem";
+import { FlashList } from "@shopify/flash-list";
 import { useAppSelector, useAppDispatch } from "@/hooks/Hook";
 import { AppDispatch, RootState } from "@/stores/store";
 import { useDownloadData } from "@/hooks/DownloadData";
@@ -22,9 +23,7 @@ import { reset, setIsModalVisible } from "@/stores/formSlice";
 export default function Index() {
   const db = useSQLiteContext();
   const dispatch = useAppDispatch<AppDispatch>();
-  const tabBarHeight = useAppSelector<RootState>((state) => {
-    state.setting.tabBarHeight;
-  });
+
   const searchSel = useAppSelector<RootState>(
     (state) => state.search.searchWord
   );
@@ -40,29 +39,21 @@ export default function Index() {
   const theme = useTheme();
 
   const [data, setData] = useState<Array<any>>([]);
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     async function update() {
-  //       await getSearchData(detectLanguage(searchWord));
-  //     }
-  //     update();
-  //   }, [])
-  // );
+
   useEffect(() => {
     async function populate() {
-  
       const isPopulated = await SecureStore.getItemAsync("populated");
       if (isPopulated) {
         console.log("already populated.Skipping....");
         return;
       }
 
-      const { completedCount, totalCount } = await setup();
+      const { completedCount, totalCount, loading } = await setup();
 
-      console.log(`importing ${completedCount}/${totalCount}`);
+      console.log(`imported ${completedCount}/${totalCount}`);
     }
     async function run() {
-      // await clearAll();
+      await clearAll();
       await populate();
       SecureStore.setItem("populated", "true");
     }
@@ -82,79 +73,82 @@ export default function Index() {
     if (isJapanese) return "hiragana/katakana";
     const isKorean = /[\uAC00-\uD7AF\u1100-\u11FF]/g.test(text);
     if (isKorean) return "hangul";
-    return "kenji";
+    return "kanji";
   };
+
   useEffect(() => {
     async function getSearchData(word: string) {
-      console.log(word);
       if (word === "") {
         setData([]);
         return;
       }
       if (word === "romaji") {
         try {
-          const japaneseRes = await db.getAllAsync(
-            "SELECT 'japanese' as language,word.id,japanese.kanji AS word,japanese.hiragana AS phonetic,word.translation,word.isFavorite,japanese.romaji from word JOIN japanese ON japanese.word_id = word.id WHERE romaji LIKE $search",
-            // "SELECT * FROM japanese",
+          const japaneseResult = await db.getAllAsync(
+            `SELECT id,word,pronunciation,burmese,favorite,'japanese' as language FROM japanese_word WHERE romaji LIKE $search;`,
             { $search: `${searchWord}%` }
           );
-          const chineseRes = await db.getAllAsync(
-            "SELECT 'chinese' as language,word.id,chinese.pinyin AS phonetic,chinese.hanzi AS word,word.translation,word.isFavorite from word JOIN chinese ON chinese.word_id = word.id WHERE pinyin LIKE $search OR pinyin_simplified LIKE $search",
+          const chineseResult = await db.getAllAsync(
+            `SELECT id,word,pinyin as pronunciation,burmese,favorite,'chinese' as language FROM chinese_word WHERE  pinyin LIKE $search OR pinyin_simplified LIKE $search;`,
             { $search: `${searchWord}%` }
           );
-          const koreanRes = await db.getAllAsync(
-            "SELECT 'korean' as language,word.id,korean.hangul AS word,korean.romaji AS phonetic,translation,word.isFavorite from word JOIN korean ON korean.word_id = word.id WHERE romaji LIKE $search;",
+          const koreanResult = await db.getAllAsync(
+            `SELECT id,word,romaji as pronunciation,burmese,favorite,'korean' as language FROM korean_word WHERE romaji LIKE $search;`,
             { $search: `${searchWord}%` }
           );
-         
-          setData([...japaneseRes, ...chineseRes, ...koreanRes]);
+          setData([...japaneseResult, ...chineseResult, ...koreanResult]);
         } catch (error) {
-          console.log("error in index.tsx.Caused by " + error);
+          console.log("error in index.tsx .Caused by :" + error);
         }
       } else if (word === "burmese") {
         try {
-          const japaneseRes = await db.getAllAsync(
-            "SELECT 'japanese' as language,word.id,japanese.kanji AS word,japanese.hiragana AS phonetic,word.translation,word.isFavorite from word JOIN japanese ON japanese.word_id = word.id WHERE translation LIKE $search;",
+          const japaneseResult = await db.getAllAsync(
+            `SELECT id,word,pronunciation,burmese,favorite,'japanese' as language FROM japanese_word WHERE burmese LIKE $search;`,
             { $search: `${searchWord}%` }
           );
-          setData([...japaneseRes]);
+          const chineseResult = await db.getAllAsync(
+            `SELECT id,word,pinyin as pronunciation,burmese,favorite,'chinese' as language FROM chinese_word WHERE  burmese LIKE $search;`,
+            { $search: `${searchWord}%` }
+          );
+          const koreanResult = await db.getAllAsync(
+            `SELECT id,word,romaji as pronunciation,burmese,favorite,'korean' as language FROM korean_word WHERE burmese LIKE $search;`,
+            { $search: `${searchWord}%` }
+          );
+          setData([...japaneseResult, ...chineseResult, ...koreanResult]);
         } catch (err) {
           console.log(err);
         }
       } else if (word === "hiragana/katakana") {
         try {
-          const jpResult = await db.getAllAsync(
-            "SELECT 'japanese' as language,word.id,japanese.kanji AS word,japanese.hiragana AS phonetic,word.translation,isFavorite from word JOIN japanese ON japanese.word_id = word.id WHERE hiragana LIKE $search OR kanji LIKE $search;",
+          const japaneseResult = await db.getAllAsync(
+            `SELECT id,word,pronunciation,burmese,favorite,'japanese' as language FROM japanese_word WHERE pronunciation LIKE $search;`,
             { $search: `${searchWord}%` }
           );
-          setData([...jpResult]);
+          setData([...japaneseResult]);
         } catch (error) {
           console.log("error in index.tsx. Caused by " + error);
         }
       } else if (word === "hangul") {
         try {
-          const result = await db.getAllAsync(
-            "SELECT 'korean' as language,word.id,korean.hangul AS word,korean.romaji AS phonetic,translation,isFavorite from word JOIN korean ON korean.word_id = word.id WHERE hangul LIKE $search;",
+          const koreanResult = await db.getAllAsync(
+            `SELECT id,word,romaji as pronunciation,burmese,favorite,'korean' as language FROM korean_word WHERE word LIKE $search;`,
             { $search: `${searchWord}%` }
           );
-          setData([...result]);
+          setData([...koreanResult]);
         } catch (error) {
           console.log("error in index.tsx.Caused by " + error);
         }
-      } else if(word === "kenji") {
+      } else if (word === "kanji") {
         try {
-          const jpResult = await db.getAllAsync(
-            "SELECT 'japanese' as language,word.id,japanese.kanji AS word,japanese.hiragana AS phonetic,word.translation,isFavorite from word JOIN japanese ON japanese.word_id = word.id WHERE hiragana LIKE $search OR kanji LIKE $search;",
+          const japaneseResult = await db.getAllAsync(
+            `SELECT id,word,pronunciation,burmese,favorite,'japanese' as language FROM japanese_word WHERE word LIKE $search;`,
             { $search: `${searchWord}%` }
           );
-          const cnResult = await db.getAllAsync(
-            "SELECT 'chinese' as language,word.id,chinese.pinyin AS phonetic,chinese.hanzi AS word,word.translation,isFavorite from word JOIN chinese ON chinese.word_id = word.id WHERE hanzi LIKE $search",
+          const chineseResult = await db.getAllAsync(
+            `SELECT id,word,pinyin as pronunciation,burmese,favorite,'chinese' as language FROM chinese_word WHERE word LIKE $search;`,
             { $search: `${searchWord}%` }
           );
-
-         
-          setData([...jpResult,...cnResult]);
-
+          setData([...japaneseResult, ...chineseResult]);
         } catch (error) {
           console.log("error in index.tsx.Caused by " + error);
         }
@@ -187,39 +181,27 @@ export default function Index() {
       className="flex-1"
       style={{ backgroundColor: theme.primaryColor }}
     >
-      <StatusBar
-        backgroundColor={
-          isModalVisible ? theme.faintedColor : theme.primaryColor
-        }
-      />
+      <StatusBar backgroundColor={theme.primaryColor} />
 
-      <View className="mx-2  bg-amber-400">
-        <FlatList
-          style={{}}
-          ItemSeparatorComponent={() => {
-            return (
-              <View
-                style={{
-                  width: "100%",
-                  height: 1,
-                  backgroundColor: theme.secondaryColor,
-                }}
-              ></View>
-            );
-          }}
+      <View className="mx-2 flex-1">
+        <FlashList
+          estimatedItemSize={50}
           data={data}
+          ItemSeparatorComponent={() => (
+            <View className="w-full border-stone-400 border-t-hairline"></View>
+          )}
           renderItem={({ item: item }) => (
             <ListItem
               id={item.id}
               word={item.word}
-              phonetic={item.phonetic}
-              translation={item.translation}
+              pronunciation={item.pronunciation}
+              translation={item.burmese}
               language={item.language}
               onPress={goToDetails}
-              isFavorite={item.isFavorite}
+              isFavorite={item.favorite}
             />
           )}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.id}
         />
       </View>
       <MultistepForm

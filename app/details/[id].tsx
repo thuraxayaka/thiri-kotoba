@@ -1,20 +1,24 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
-import { Text, View, StyleSheet, TouchableHighlight } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  TouchableHighlight,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "@/hooks/Theme";
-import data from "@/constants/dummy.json";
 import LanguageDetails from "@/components/LanguageDetails";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter, useFocusEffect } from "expo-router";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
-import CustomModal from "@/components/CustomModal";
 import { useSqlite } from "@/hooks/Database";
 import { useSQLiteContext } from "expo-sqlite";
-
+import Feather from "@expo/vector-icons/Feather";
 import { useAppDispatch, useAppSelector } from "@/hooks/Hook";
 import { changeTheme } from "@/stores/settingSlice";
-import { WordDetails, Language, Map } from "@/types";
+import { WordDetails, Language, Map, Example, Word } from "@/types";
+import { ScrollView } from "react-native";
 
 type modalInput = {
   label: string;
@@ -24,398 +28,106 @@ type modalInput = {
 export default function DetailsScreen() {
   const { id, language } = useLocalSearchParams();
   const lang: Language = language as Language;
-
-  const [isModalVisible, setModalVisible] = useState<boolean>(false);
-  const [modalData, setModalData] = useState<modalInput[]>([]);
+  const [favorite, setFavorite] = useState<boolean>(false);
   const router = useRouter();
-  const languageOrder: Language[] = ["japanese", "chinese", "korean"];
-
-  const [selectedLanguage, setSelectedLanguage] = useState<Language>(lang);
-
-  const [wordData, setWordData] = useState<
-    Partial<Record<Language, WordDetails>>
-  >({});
+  const [wordDetails, setWordDetails] = useState<Partial<WordDetails>>({});
   const db = useSQLiteContext();
   const theme = useTheme();
 
   useEffect(() => {
     async function getData() {
-      if (wordData[selectedLanguage]) {
-        return;
-      }
-
       try {
-        const word = await db.getFirstAsync(
-          `SELECT * FROM ${selectedLanguage} JOIN word ON word.id = ${selectedLanguage}.word_id WHERE word.id = ${id} `
-        );
-        if (!word) throw `Word ${word} doesn't exist`;
-        const examples = await db.getAllAsync(
-          `SELECT * FROM ${selectedLanguage}_example WHERE word_id = ${id}`
-        );
+        if (lang === "japanese") {
+          const result = await db.getFirstAsync(
+            `SELECT id,word,parts_of_speech,categories,english,burmese,definition,level,formality,
+             pronunciation,'japanese' as language,romaji,synonyms,antonyms,frequency,favorite FROM japanese_word WHERE id = ${id};`
+          );
+          if (!result) throw `word_id [${id}] doesn't exist`;
+          const word = result as Word;
+          const examples: Example[] = await db.getAllAsync(
+            `SELECT * FROM japanese_example WHERE word_id = ${id}`
+          );
 
-        if (examples.length == 0) throw `Examples for ${word} doesn't exist`;
-        setWordData((prev) => {
-          return {
-            ...prev,
-            [selectedLanguage]: {
-              word: { ...word, language: selectedLanguage },
-              examples,
-            },
-          };
-        });
+          if (typeof word.categories === "string") {
+            word.categories = word.categories.split(",");
+          }
+          if (typeof word.synonyms === "string") {
+            word.synonyms = word.synonyms.split(",");
+          }
+          if (typeof word.antonyms === "string") {
+            word.antonyms = word.antonyms.split(",");
+          }
+
+          setWordDetails({ word, examples });
+        } else if (lang === "chinese") {
+          const result = await db.getFirstAsync(
+            `SELECT id,word,parts_of_speech,categories,english,burmese,definition,level,formality,
+            pinyin as pronunciation,synonyms,antonyms,frequency,favorite,'chinese' as language FROM chinese_word WHERE id = ${id};`
+          );
+          if (!result) throw `word_id [${id}] doesn't exist`;
+          const word = result as Word;
+          const examples: Example[] = await db.getAllAsync(
+            `SELECT * FROM chinese_example WHERE word_id = ${id}`
+          );
+          if (typeof word.categories === "string") {
+            word.categories = word.categories.split(",");
+          }
+          if (typeof word.synonyms === "string") {
+            word.synonyms = word.synonyms.split(",");
+          }
+          if (typeof word.antonyms === "string") {
+            word.antonyms = word.antonyms.split(",");
+          }
+
+          setWordDetails({ word, examples });
+        } else {
+          const result = await db.getFirstAsync(
+            `SELECT id,word,parts_of_speech,categories,english,burmese,definition,level,formality,
+             romaji as pronunciation,synonyms,antonyms,frequency,favorite,'korean' as language FROM korean_word WHERE id = ${id};`
+          );
+          if (!result) throw `word_id [${id}] doesn't exist`;
+          const word = result as Word;
+          const examples: Example[] = await db.getAllAsync(
+            `SELECT * FROM korean_example WHERE word_id = ${id}`
+          );
+          if (typeof word.categories === "string") {
+            word.categories = word.categories.split(",");
+          }
+          if (typeof word.synonyms === "string") {
+            word.synonyms = word.synonyms.split(",");
+          }
+          if (typeof word.antonyms === "string") {
+            word.antonyms = word.antonyms.split(",");
+          }
+
+          setWordDetails({ word, examples });
+        }
       } catch (err) {
         console.log(err);
       }
     }
     getData();
-  }, [selectedLanguage]);
+  }, []);
 
-  const handleSelectedLanguage = (idx: number) => {
-    if (idx < 2) {
-      idx++;
-    } else {
-      idx = 0;
-    }
-    setSelectedLanguage(languageOrder[idx]);
-  };
-
-  const handleClose = () => {
-    setModalVisible(false);
-  };
-
-  const showModal = ([...args]: Map<string>[]) => {
-    const arr: modalInput[] = [];
-    args.forEach((arg) => {
-      const key = Object.keys(arg)[0];
-      const value = Object.values(arg)[0];
-      const obj: modalInput = { label: key, inputText: value };
-      arr.push(obj);
-    });
-    setModalData(arr);
-    setModalVisible(true);
-  };
   const getStyledSentences = (input: string): JSX.Element => {
     const formattedString = input.split(/(\(.*?\))/g).map((part, index) => {
       if (part.match(/^\(.*?\)$/)) {
         return (
-          <Text key={index} style={{ color: theme.faintedColor }}>
+          <Text key={index} style={{ color: theme.mutedColor }}>
             {part}
           </Text>
         );
       }
       return (
-        <Text key={index} className="text-lg">
+        <Text key={index} className="text-md">
           {part}
         </Text>
       );
     });
 
-    return <Text className="text-base">{formattedString}</Text>;
+    return <Text>{formattedString}</Text>;
   };
 
-  const JapaneseComponent = () => {
-    const data = wordData["japanese"];
-    const word = data && data.word;
-    const examples = data && data.examples;
-    return (
-      <View>
-        {word && examples && (
-          <View>
-            {word.language === "japanese" && (
-              <LanguageDetails
-                word={word.kanji}
-                type={word.type}
-                level={word.level}
-                reading={word.hiragana}
-                formality={word.formality}
-                romaji={word.romaji}
-                handleSelectedLanguage={handleSelectedLanguage}
-                selectedLanguage={selectedLanguage}
-                handleEdit={showModal}
-              />
-            )}
-            <View className="mt-6 gap-4">
-              <View className=" border-t-hairline border-t-neutral-400 pb-4">
-                <Text className="mb-2 text-neutral-500  text-sm">Burmese</Text>
-                <View className="flex flex-row justify-between items-center">
-                  <Text>{word.translation}</Text>
-                  <TouchableHighlight
-                    underlayColor={theme.faintedColor}
-                    style={{
-                      padding: 5,
-                      borderRadius: 5,
-                    }}
-                    onPress={() => {
-                      const obj: Map<string> = {
-                        Burmese: word.translation,
-                      };
-                      showModal([obj]);
-                    }}
-                  >
-                    <FontAwesome
-                      name="pencil-square-o"
-                      size={20}
-                      color={theme.textColor}
-                    />
-                  </TouchableHighlight>
-                </View>
-              </View>
-              <View className=" border-t-hairline border-t-neutral-400 pb-4">
-                <Text className="mb-2  text-neutral-500 text-sm">English</Text>
-                <View className="flex flex-row justify-between items-center">
-                  <Text>{word.definition}</Text>
-                  <TouchableHighlight
-                    underlayColor={theme.faintedColor}
-                    style={{
-                      padding: 5,
-                      borderRadius: 5,
-                    }}
-                    onPress={() => {
-                      const obj: Map<string> = {
-                        English: word.definition,
-                      };
-                      showModal([obj]);
-                    }}
-                  >
-                    <FontAwesome
-                      name="pencil-square-o"
-                      size={20}
-                      color={theme.textColor}
-                    />
-                  </TouchableHighlight>
-                </View>
-              </View>
-            </View>
-            <View className="gap-4 my-4 border-t-hairline border-t-neutral-400">
-              <Text className="underline text-sm text-neutral-500">
-                Examples
-              </Text>
-              <View className="gap-4">
-                {examples.map((example, i) => (
-                  <View key={i} className="flex-row gap-2">
-                    <Text>{i + 1}.</Text>
-                    <View>
-                      <Text className="font-bold">{getStyledSentences(example.sentence)}</Text>
-                      <Text style={{ color: theme.mutedColor,fontWeight: '600' }}>
-                        {example.phonetic}
-                      </Text>
-                      <Text style={{ color: theme.mutedColor }}>
-                        {example.translation}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </View>
-        )}
-      </View>
-    );
-  };
-  const ChineseComponent = () => {
-    const data = wordData["chinese"];
-    const word = data && data.word;
-    const examples = data && data.examples;
-
-    return (
-      <View>
-        {word && examples && (
-          <View>
-            {word.language === "chinese" && (
-              <LanguageDetails
-                word={word.hanzi}
-                type={word.type}
-                level={word.level}
-                reading={word.pinyin}
-                formality={word.formality}
-                handleSelectedLanguage={handleSelectedLanguage}
-                selectedLanguage={selectedLanguage}
-                handleEdit={showModal}
-              />
-            )}
-            <View className="mt-6 gap-4">
-              <View className=" border-t-hairline border-t-neutral-400 pb-4">
-                <Text className="mb-2 text-neutral-500  text-sm">Burmese</Text>
-                <View className="flex flex-row justify-between items-center">
-                  <Text>{word.translation}</Text>
-                  <TouchableHighlight
-                    underlayColor={theme.faintedColor}
-                    style={{
-                      padding: 5,
-                      borderRadius: 5,
-                    }}
-                    onPress={() => {
-                      const obj: Map<string> = {
-                        Burmese: word.translation,
-                      };
-                      showModal([obj]);
-                    }}
-                  >
-                    <FontAwesome
-                      name="pencil-square-o"
-                      size={20}
-                      color={theme.textColor}
-                    />
-                  </TouchableHighlight>
-                </View>
-              </View>
-              <View className=" border-t-hairline border-t-neutral-400 pb-4">
-                <Text className="mb-2  text-neutral-500 text-sm">English</Text>
-                <View className="flex flex-row justify-between items-center">
-                  <Text>{word.definition}</Text>
-                  <TouchableHighlight
-                    underlayColor={theme.faintedColor}
-                    style={{
-                      padding: 5,
-                      borderRadius: 5,
-                    }}
-                    onPress={() => {
-                      const obj: Map<string> = {
-                        English: word.definition,
-                      };
-                      showModal([obj]);
-                    }}
-                  >
-                    <FontAwesome
-                      name="pencil-square-o"
-                      size={20}
-                      color={theme.textColor}
-                    />
-                  </TouchableHighlight>
-                </View>
-              </View>
-            </View>
-            <View className="gap-4 my-4 border-t-hairline border-t-neutral-400">
-              <Text className="underline text-sm text-neutral-500">
-                Examples
-              </Text>
-              <View className="gap-4">
-                {examples.map((example, i) => (
-                  <View key={i} className="flex-row gap-2 items-start ">
-                    <Text className=" text-lg">{i + 1}.</Text>
-                    <View>
-                      <Text className="font-bold">{getStyledSentences(example.sentence)}</Text>
-                      <Text style={{ color: theme.mutedColor,fontWeight: 'bold' }}>
-                        {example.phonetic}
-                      </Text>
-                      <Text style={{ color: theme.mutedColor }}>
-                        {example.translation}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </View>
-        )}
-      </View>
-    );
-  };
-
-  const KoreanComponent = () => {
-    const data = wordData.korean;
-    const word = data?.word;
-    const examples = data?.examples;
-    return (
-      <View>
-        {word && examples && (
-          <View>
-            {word.language === "korean" && (
-              <LanguageDetails
-                word={word.hangul}
-                type={word.type}
-                level={word.level}
-                reading={word.romaji}
-                formality={word.formality}
-                handleSelectedLanguage={handleSelectedLanguage}
-                selectedLanguage={selectedLanguage}
-                handleEdit={showModal}
-              />
-            )}
-            <View className="mt-6 gap-4">
-              <View className=" border-t-hairline border-t-neutral-400 pb-4">
-                <Text className="mb-2 text-neutral-500  text-sm">Burmese</Text>
-                <View className="flex flex-row justify-between items-center">
-                  <Text>{word.translation}</Text>
-                  <TouchableHighlight
-                    underlayColor={theme.faintedColor}
-                    style={{
-                      padding: 5,
-                      borderRadius: 5,
-                    }}
-                    onPress={() => {
-                      const obj: Map<string> = {
-                        Burmese: word.translation,
-                      };
-                      showModal([obj]);
-                    }}
-                  >
-                    <FontAwesome
-                      name="pencil-square-o"
-                      size={20}
-                      color={theme.textColor}
-                    />
-                  </TouchableHighlight>
-                </View>
-              </View>
-              <View className=" border-t-hairline border-t-neutral-400 pb-4">
-                <Text className="mb-2  text-neutral-500 text-sm">English</Text>
-                <View className="flex flex-row justify-between items-center">
-                  <Text>{word.definition}</Text>
-                  <TouchableHighlight
-                    underlayColor={theme.faintedColor}
-                    style={{
-                      padding: 5,
-                      borderRadius: 5,
-                    }}
-                    onPress={() => {
-                      const obj: Map<string> = {
-                        English: word.definition,
-                      };
-                      showModal([obj]);
-                    }}
-                  >
-                    <FontAwesome
-                      name="pencil-square-o"
-                      size={20}
-                      color={theme.textColor}
-                    />
-                  </TouchableHighlight>
-                </View>
-              </View>
-            </View>
-            <View className="gap-4 my-4 border-t-hairline border-t-neutral-400">
-              <Text className="underline text-sm text-neutral-500">
-                Examples
-              </Text>
-              <View className="gap-4">
-                {examples.map((example, i) => (
-                  <View key={i} className="flex-row gap-2 items-start ">
-                    <Text className=" text-lg">{i + 1}.</Text>
-                    <View>
-                      <Text className="font-bold">{getStyledSentences(example.sentence)}</Text>
-                      <Text style={{ color: theme.mutedColor,fontWeight: 'bold' }}>
-                        {example.phonetic}
-                      </Text>
-                      <Text style={{ color: theme.mutedColor }}>
-                        {example.translation}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </View>
-        )}
-      </View>
-    );
-  };
-
-  const componentMapper: Record<Language, JSX.Element> = {
-    japanese: <JapaneseComponent />,
-    chinese: <ChineseComponent />,
-    korean: <KoreanComponent />,
-  };
   const styles = useMemo(() => {
     return StyleSheet.create({
       container: {
@@ -427,29 +139,123 @@ export default function DetailsScreen() {
   const goBack = () => {
     router.back();
   };
+
   return (
     <SafeAreaView edges={["bottom", "left", "right"]} style={styles.container}>
-      <View className="gap-4 px-4">
-        <Ionicons
-          name="arrow-back-outline"
-          className="mt-4"
-          size={28}
-          color="black"
-          onPress={goBack}
-        />
+      <ScrollView className="gap-4 px-4">
+        <View className="flex-row mb-4 justify-between items-center">
+          <Ionicons
+            name="arrow-back-outline"
+            size={28}
+            color="black"
+            onPress={goBack}
+          />
+        </View>
 
-        {componentMapper[selectedLanguage]}
-        <CustomModal
-          isVisible={isModalVisible}
-          transparent={true}
-          animationType="fade"
-          closeModal={handleClose}
-          data={modalData}
-          wordId={id as string}
-          language={selectedLanguage}
-          setWordData={setWordData}
-        />
-      </View>
+        <View>
+          {
+            <View>
+              {wordDetails.word?.language === "japanese" && (
+                <LanguageDetails
+                  word={wordDetails.word.word}
+                  partsOfSpeech={wordDetails.word.parts_of_speech}
+                  level={wordDetails.word.level}
+                  reading={wordDetails.word.pronunciation}
+                  formality={wordDetails.word.formality}
+                  romaji={wordDetails.word.romaji}
+                  selectedLanguage={lang}
+                  categories={wordDetails.word.categories}
+                />
+              )}
+              {(wordDetails.word?.language === "korean" ||
+                wordDetails.word?.language === "chinese") && (
+                <LanguageDetails
+                  word={wordDetails.word.word}
+                  partsOfSpeech={wordDetails.word.parts_of_speech}
+                  level={wordDetails.word.level}
+                  reading={wordDetails.word.pronunciation}
+                  formality={wordDetails.word.formality}
+                  selectedLanguage={lang}
+                  categories={wordDetails.word.categories}
+                />
+              )}
+              <View className="mt-6 ">
+                <View className=" border-t-hairline border-b-hairline py-4 border-stone-400 ">
+                  <Text className="mb-1 text-neutral-500 text-sm">Burmese</Text>
+                  <Text className="text-md">{wordDetails.word?.burmese}</Text>
+                </View>
+                <View className="py-4">
+                  <Text className="mb-1  text-neutral-500 text-sm">
+                    English
+                  </Text>
+                  <Text className="text-md">{wordDetails.word?.english}</Text>
+                </View>
+                <View className="  border-t-hairline border-b-hairline py-4 border-stone-400">
+                  <Text className="mb-1  text-neutral-500 text-sm">
+                    Definition
+                  </Text>
+                  <Text className="text-md">
+                    {wordDetails.word?.definition}
+                  </Text>
+                </View>
+              </View>
+              <View className="gap-4 py-4 border-b-hairline  border-b-stone-400">
+                <Text className="text-sm text-neutral-500">Examples</Text>
+                <View className="gap-2">
+                  {wordDetails.examples?.map((example, i) => (
+                    <View key={i}>
+                      <View className="flex justify-center py-2">
+                        <Text className="font-semibold">
+                          {getStyledSentences(example.sentence)}
+                        </Text>
+                        <Text style={{ color: theme.mutedColor }}>
+                          {example.translation}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </View>
+              <View className="py-4">
+                <View className=" flex-row gap-1 mb-2">
+                  <Text>Synonyms:</Text>
+                  {Array.isArray(wordDetails.word?.synonyms) &&
+                    wordDetails.word?.synonyms.length > 0 &&
+                    wordDetails.word.synonyms.map((synonym, i) => {
+                      return (
+                        <View className="flex-row" key={i}>
+                          <TouchableOpacity onPress={() => {}}>
+                            <Text className="text-sky-400">{synonym}</Text>
+                          </TouchableOpacity>
+                          {i + 1 !== wordDetails.word?.synonyms?.length && (
+                            <Text>,</Text>
+                          )}
+                        </View>
+                      );
+                    })}
+                </View>
+                <View className=" flex-row gap-1">
+                  <Text>Antonyms:</Text>
+                  {Array.isArray(wordDetails.word?.antonyms) &&
+                    wordDetails.word?.antonyms.length > 0 &&
+                    wordDetails.word.antonyms.map((antonym, i) => {
+                      return (
+                        <View className="flex-row" key={i}>
+                          <TouchableOpacity onPress={() => {}}>
+                            <Text className="text-sky-400">{antonym}</Text>
+                          </TouchableOpacity>
+                          {i + 1 !== wordDetails.word?.antonyms?.length && (
+                            <Text>,</Text>
+                          )}
+                        </View>
+                      );
+                    })}
+                </View>
+              </View>
+            </View>
+          }
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

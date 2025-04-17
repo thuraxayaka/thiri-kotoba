@@ -28,7 +28,7 @@ const migrateDb = async (db: SQLiteDatabase) => {
   try {
     result = await db.getFirstAsync<{
       user_version: number;
-    }>("PRAGMA user_version");
+    }>("PRAGMA user_version=0");
 
     const currentDbVersion = result?.user_version ?? 0;
     if (currentDbVersion >= DATABASE_VERSION) {
@@ -39,7 +39,6 @@ const migrateDb = async (db: SQLiteDatabase) => {
     if (currentDbVersion === 0) {
       // Initial migration
 
-      
       await db.execAsync(`CREATE TABLE IF NOT EXISTS japanese_word (
       id INTEGER PRIMARY KEY  AUTOINCREMENT,
       word TEXT NOT NULL,
@@ -47,19 +46,20 @@ const migrateDb = async (db: SQLiteDatabase) => {
       categories TEXT NOT NULL,
       english TEXT NOT NULL,
       burmese TEXT NOT NULL,
-      definition TEXT NOT NULL,
+      definition TEXT,
       level TEXT NOT NULL,
       formality TEXT NOT NULL,
       pronunciation TEXT NOT NULL,
       romaji TEXT NOT NULL,
-      synonyms TEXT NOT NULL,
-      antonyms TEXT NOT NULL,
+      synonyms TEXT,
+      antonyms TEXT,
       frequency TEXT NOT NULL,
       favorite INTEGER,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
     `);
 
+      console.log("created table japanese_word...");
       await db.execAsync(`
       CREATE TABLE IF NOT EXISTS japanese_example(
       id INTEGER PRIMARY KEY  AUTOINCREMENT,
@@ -69,7 +69,6 @@ const migrateDb = async (db: SQLiteDatabase) => {
       translation TEXT NOT NULL,
       FOREIGN KEY (word_id) REFERENCES japanese_word(id) ON DELETE CASCADE
       );`);
-        
 
       await db.execAsync(`CREATE TABLE IF NOT EXISTS chinese_word (
         id INTEGER PRIMARY KEY  AUTOINCREMENT,
@@ -78,19 +77,19 @@ const migrateDb = async (db: SQLiteDatabase) => {
         categories TEXT NOT NULL,
         english TEXT NOT NULL,
         burmese TEXT NOT NULL,
-        definition TEXT NOT NULL,
+        definition TEXT,
         level TEXT NOT NULL,
         formality TEXT NOT NULL,
         pinyin TEXT NOT NULL,
         pinyin_simplified TEXT NOT NULL,
-        synonyms TEXT NOT NULL,
-        antonyms TEXT NOT NULL,
+        synonyms TEXT,
+        antonyms TEXT,
         frequency TEXT NOT NULL,
         favorite INTEGER,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
       `);
-
+      console.log("created table chinese_word...");
       await db.execAsync(`
         CREATE TABLE IF NOT EXISTS chinese_example(
         id INTEGER PRIMARY KEY  AUTOINCREMENT,
@@ -100,37 +99,34 @@ const migrateDb = async (db: SQLiteDatabase) => {
         translation TEXT NOT NULL,
         FOREIGN KEY (word_id) REFERENCES chinese_word(id) ON DELETE CASCADE
         );`);
-        await db.execAsync(`CREATE TABLE IF NOT EXISTS korean_word (
+      await db.execAsync(`CREATE TABLE IF NOT EXISTS korean_word (
           id INTEGER PRIMARY KEY  AUTOINCREMENT,
           word TEXT NOT NULL,
           parts_of_speech TEXT NOT NULL,
           categories TEXT NOT NULL,
           english TEXT NOT NULL,
           burmese TEXT NOT NULL,
-          definition TEXT NOT NULL,
+          definition TEXT,
           level TEXT NOT NULL,
           formality TEXT NOT NULL,
           romaji TEXT NOT NULL,
-          synonyms TEXT NOT NULL,
-          antonyms TEXT NOT NULL,
+          synonyms TEXT,
+          antonyms TEXT,
           frequency TEXT NOT NULL,
           favorite INTEGER,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
           );
         `);
-
-     
+      console.log("created table korean_word...");
       await db.execAsync(`
         CREATE TABLE IF NOT EXISTS korean_example(
         id INTEGER PRIMARY KEY  AUTOINCREMENT,
         word_id INTEGER,
         sentence TEXT NOT NULL,
-        phonetic TEXT NOT NULL,
+        pronunciation NOT NULL,
         translation TEXT NOT NULL,
         FOREIGN KEY (word_id) REFERENCES korean_word(id) ON DELETE CASCADE
         );`);
-     
-     
     }
 
     // Increment the version after migration

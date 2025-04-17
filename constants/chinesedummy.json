@@ -1,0 +1,88 @@
+[
+  {
+    "id": 1,
+    "word": "大人",
+    "partsOfSpeech": "noun",
+    "categories": ["people", "social roles"],
+    "english": "adult, grown-up; (historical) your excellency, lord",
+    "burmese": "လူကြီး",
+    "definition": "A person who is fully grown or developed; an adult. Also used historically as a respectful form of address for officials or superiors.",
+    "language": "chinese",
+    "level": "HSK3",
+    "formality": "neutral/formal",
+    "pinyin": "dàren",
+    "synonyms": ["成年人", "成人"],
+    "antonyms": ["小孩", "儿童"],
+    "frequency": "medium",
+    "examples": [
+      {
+        "sentence": "他已经是(大人)了。",
+        "pronunciation": "Tā yǐjīng shì dàren le.",
+        "translation": "He is already an adult."
+      },
+      {
+        "sentence": "小孩子不应该干涉(大人)的事。",
+        "pronunciation": "Xiǎoháizi bù yīnggāi gānshè dàren de shì.",
+        "translation": "Children shouldn't interfere in adults' affairs."
+      },
+      {
+        "sentence": "这部电影只适合(大人)看。",
+        "pronunciation": "Zhè bù diànyǐng zhǐ shìhé dàren kàn.",
+        "translation": "This movie is only suitable for adults."
+      },
+      {
+        "sentence": "你已经是(大人)了，要对自己的行为负责。",
+        "pronunciation": "Nǐ yǐjīng shì dàren le, yào duì zìjǐ de xíngwéi fùzé.",
+        "translation": "You are already an adult, you need to be responsible for your actions."
+      },
+      {
+        "sentence": "他表现得像个小(大人)。",
+        "pronunciation": "Tā biǎoxiàn de xiàng ge xiǎo dàren.",
+        "translation": "He acts like a little adult."
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "word": "家",
+    "partsOfSpeech": "noun",
+    "categories": ["places", "family", "relationships", "buildings"],
+    "english": "home, family, household; measure word for families or businesses",
+    "burmese": "အိမ်, မိသားစု",
+    "definition": "A place where one lives, such as a house or apartment; a group consisting of parents and children living together as a unit; a household. Also used as a measure word for families or business establishments.",
+    "language": "chinese",
+    "level": "HSK1",
+    "formality": "neutral",
+    "pinyin": "jiā",
+    "synonyms": ["家庭", "房屋"],
+    "antonyms": [],
+    "frequency": "high",
+    "examples": [
+      {
+        "sentence": "这是我的(家)。",
+        "pronunciation": "Zhè shì wǒ de jiā.",
+        "translation": "This is my home."
+      },
+      {
+        "sentence": "我(家)有四口人。",
+        "pronunciation": "Wǒ jiā yǒu sì kǒu rén.",
+        "translation": "There are four people in my family."
+      },
+      {
+        "sentence": "我晚上九点回(家)。",
+        "pronunciation": "Wǒ wǎnshang jiǔ diǎn huí jiā.",
+        "translation": "I go home at 9 PM."
+      },
+      {
+        "sentence": "他开了一(家)公司。",
+        "pronunciation": "Tā kāi le yì jiā gōngsī.",
+        "translation": "He opened a company."
+      },
+      {
+        "sentence": "欢迎来到我(家)！",
+        "pronunciation": "Huānyíng lái dào wǒ jiā!",
+        "translation": "Welcome to my home!"
+      }
+    ]
+  }
+]

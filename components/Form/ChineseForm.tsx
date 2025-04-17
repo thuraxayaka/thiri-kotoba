@@ -4,55 +4,61 @@ import {
   TouchableOpacity,
   TextInput,
   Animated,
+  Easing,
+  Alert,
 } from "react-native";
-import AntDesign from "@expo/vector-icons/AntDesign";
-import React, { useState, useEffect, useMemo } from "react";
+import Feather from "@expo/vector-icons/Feather";
+import React, { useState, useEffect, useRef } from "react";
 import { useTheme } from "@/hooks/Theme";
-import { PartsOfSpeech, Formality, stepMapper,ChineseLevel } from "@/types";
+import {
+  PartsOfSpeech,
+  Formality,
+  stepMapper,
+  ChineseLevel,
+  SelectListItem,
+  Frequency,
+} from "@/types";
 import { useAppDispatch, useAppSelector } from "@/hooks/Hook";
 import ExampleForm from "./ExampleForm";
-import { setSubmitted, updateChineseWord,setRequiredFields } from "@/stores/formSlice";
+import {
+  setSubmitted,
+  updateChineseWord,
+  setRequiredFields,
+  setIsModalVisible,
+} from "@/stores/formSlice";
 import { AppDispatch, RootState } from "@/stores/store";
 import { setShouldScrollToStart } from "@/stores/formSlice";
 import { SelectList } from "react-native-dropdown-select-list";
 import { useSqlite } from "@/hooks/Database";
-type SelectListPartsOfSpeech = {
-  key: string | number;
-  value: PartsOfSpeech;
-};
-type SelectListFormality = {
-  key: string | number;
-  value: Formality;
-};
-type SelectListLevel = {
-  key: string | number;
-  value: ChineseLevel
-}
 
 const ChineseForm = () => {
   const totalSteps = 2;
   const theme = useTheme();
-  const {addToTable} = useSqlite();
+  const { insertData } = useSqlite();
   const chineseSel = useAppSelector((state) => state.form.chinese);
-  const [hanzi, setHanzi] = useState<string>(chineseSel.hanzi || "");
-  const [pinyin, setPinyin] = useState<string>(chineseSel.pinyin || "");
+  const [word, setWord] = useState<string>(chineseSel.word || "");
+  const [pinyin, setPinyin] = useState<string>(chineseSel.pronunciation || "");
   const [selectedPartsOfSpeech, setSelectedPartsOfSpeech] =
     React.useState<PartsOfSpeech>("noun");
   const [selectedFormality, setSelectedFormality] =
     useState<Formality>("neutral");
-  const [burmeseMeaning, setBurmeseMeaning] = useState<string>(
-    chineseSel.translation || ""
+  const [burmese, setBurmese] = useState<string>(chineseSel.burmese || "");
+  const [english, setEnglish] = useState<string>(chineseSel.definition || "");
+  const [antonyms, setAntonyms] = useState<string>("");
+  const [synonyms, setSynonyms] = useState<string>("");
+  const [definition, setDefinition] = useState<string>("");
+  const [categories, setCategories] = useState<string>("");
+  const [level, setLevel] = useState<ChineseLevel>("HSK 1");
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [frequency, setFrequency] = useState<Frequency>("medium");
+  const isSubmitted = useAppSelector(
+    (state: RootState) => state.form.isSubmitted
   );
-  const [englishMeaning, setEnglishMeaning] = useState<string>(
-    chineseSel.definition || ""
-  )
-  const [category, setCategory] = useState<string>(chineseSel.category || "");
-  const [level,setLevel] = useState<ChineseLevel>("HSK 1");
-  const [currentStep,setCurrentStep ] = useState<number>(1);
-  const isSubmitted = useAppSelector((state:RootState) => state.form.isSubmitted);
   const dispatch = useAppDispatch<AppDispatch>();
-  const requiredFields = useAppSelector((state:RootState) => state.form.requiredFields)
-  const partsOfSpeech: SelectListPartsOfSpeech[] = [
+  const requiredFields = useAppSelector(
+    (state: RootState) => state.form.requiredFields
+  );
+  const partsOfSpeech: SelectListItem<PartsOfSpeech>[] = [
     {
       key: "1",
       value: "noun",
@@ -86,7 +92,7 @@ const ChineseForm = () => {
       value: "interjection",
     },
   ];
-  const formality: SelectListFormality[] = [
+  const formality: SelectListItem<Formality>[] = [
     {
       key: "1",
       value: "formal",
@@ -112,214 +118,310 @@ const ChineseForm = () => {
       value: "rude",
     },
   ];
-  const levels: SelectListLevel[] =  [
+  const levels: SelectListItem<ChineseLevel>[] = [
     {
       key: 1,
-      value: "HSK 1"
+      value: "HSK 1",
     },
- 
+
     {
       key: 2,
-      value: "HSK 2"
+      value: "HSK 2",
     },
-  
+
     {
       key: 3,
-      value: "HSK 3"
+      value: "HSK 3",
     },
- 
+
     {
       key: 4,
-      value: "HSK 4"
+      value: "HSK 4",
     },
 
     {
       key: 5,
-      value: "HSK 5"
+      value: "HSK 5",
     },
 
     {
       key: 5,
-      value: "HSK 6"
+      value: "HSK 6",
     },
-  ]
-  
+  ];
+  const frequencies: SelectListItem<Frequency>[] = [
+    {
+      key: 1,
+      value: "very_low",
+    },
+    {
+      key: 2,
+      value: "low",
+    },
+    {
+      key: 3,
+      value: "medium",
+    },
+    {
+      key: 4,
+      value: "high",
+    },
+  ];
+  //update as user types in
   useEffect(() => {
     const wordData = {
-      hanzi,
+      word,
       pinyin,
       level,
       formality: selectedFormality,
-      translation: burmeseMeaning,
-      definition: englishMeaning,
-      type: selectedPartsOfSpeech,
-      category,
+      burmese,
+      english,
+      synonyms,
+      antonyms,
+      frequency,
+      definition: english,
+      partsOfSpeech: selectedPartsOfSpeech,
+      categories,
     };
-    if(isSubmitted) {
+    if (isSubmitted) {
       //hide error when user start typing
       dispatch(setSubmitted(false));
     }
+    updateRequiredFields();
     dispatch(updateChineseWord({ language: "chinese", ...wordData }));
-    
   }, [
-    hanzi,
+    word,
     pinyin,
     selectedFormality,
-    burmeseMeaning,
-    englishMeaning,
+    burmese,
+    english,
+    antonyms,
+    synonyms,
+    definition,
     selectedPartsOfSpeech,
-    category,
-    level
+    categories,
+    frequency,
+    level,
   ]);
+  const isAllInputsValid = (): boolean => {
+    let isInputsRequired = Object.entries(requiredFields).some(
+      ([key, value]) => {
+        if (typeof value === "string" && value === "required") {
+          console.log("required key:" + key);
+          return true;
+        }
+        if (typeof value === "object") {
+          for (const [nestedKey, nestedValue] of Object.entries(value)) {
+            if (typeof nestedValue === "string" && nestedValue === "required") {
+              console.log("required key in nested:" + key + "." + nestedKey);
+              return true;
+            }
+          }
+        }
+
+        return false;
+      }
+    );
+
+    return !isInputsRequired;
+  };
+  //checking if inputs valid
+  useEffect(() => {
+    async function run() {
+      const isValid = isAllInputsValid();
+      if (isValid) {
+        const { success, lastInsertRow } = await insertData(chineseSel);
+        console.log("success" + success);
+        if (success) {
+          console.log("Added word successfully....");
+          console.log("Last Insert RowId : " + lastInsertRow);
+        }
+      }
+    }
+
+    run();
+  }, [isSubmitted]);
+  //inputs fields
   const inputs = [
     {
       label: "Hanzi",
-      placeholder: "Enter kanji",
-      value: hanzi,
-      fieldName: "hanzi",
-      onChangeText: setHanzi,
+      placeholder: "eg. 大人",
+      value: word,
+      fieldName: "word",
+      onChangeText: setWord,
     },
     {
       label: "Pinyin",
-      placeholder: "Enter pinyin",
+      placeholder: "eg. dàren",
       value: pinyin,
       fieldName: "pinyin",
       onChangeText: setPinyin,
     },
 
     {
-      label: "Burmese Meaning",
-      placeholder: "Enter burmese meaning",
+      label: "Burmese",
+      placeholder: "eg. လူကြီး",
       fieldName: "burmese",
-      value: burmeseMeaning,
-      onChangeText: setBurmeseMeaning,
+      value: burmese,
+      onChangeText: setBurmese,
     },
     {
-      label: "English Meaning",
-      placeholder: "Enter english meaning",
-      value: englishMeaning,
+      label: "English",
+      placeholder: "eg. adult",
+      value: english,
       fieldName: "english",
-      onChangeText: setEnglishMeaning,
+      onChangeText: setEnglish,
+    },
+    {
+      label: "Definition in English(Optional)",
+      placeholder: "eg. A person who is fully grown",
+      value: definition,
+      fieldName: "definition",
+      onChangeText: setDefinition,
+      optional: true,
     },
     {
       label: "Category",
-      placeholder: "Enter category",
-      value: category,
-      fieldName: "category",
-      onChangeText: setCategory,
+      placeholder: "eg. people,etc.",
+      value: categories,
+      fieldName: "categories",
+      onChangeText: setCategories,
+    },
+    {
+      label: "Synonyms(Optional)",
+      placeholder: "eg. 成年人,成人",
+      value: synonyms,
+      fieldName: "synonyms",
+      onChangeText: setSynonyms,
+      optional: true,
+    },
+    {
+      label: "Antonyms(Optional)",
+      placeholder: "eg. 成年人,成人",
+      value: antonyms,
+      fieldName: "antonyms",
+      onChangeText: setAntonyms,
+      optional: true,
     },
   ];
-  const inputsAnim = useMemo(() => {
-    return Array.from({ length: 5 }, () => new Animated.Value(0));
-  }, []);
+  const updateRequiredFields = () => {
+    inputs.forEach(({ fieldName, optional }, i) => {
+      if (optional) return;
+      const value = inputs[i].value;
+      if (requiredFields[fieldName] === undefined) {
+        dispatch(setRequiredFields({ [fieldName]: "required" }));
+      } else {
+        dispatch(
+          setRequiredFields({
+            [fieldName]: value === "" ? "required" : "",
+          })
+        );
+      }
+    });
+  };
+  //Animation setup
+  const totalInputs = inputs.length;
+  const selectboxes = 4;
+  const totalItemsToAnimate = totalInputs + selectboxes;
+  const allAnimationsRefs = useRef(
+    [...Array(totalItemsToAnimate)].map((val) => new Animated.Value(0))
+  ).current;
   useEffect(() => {
-    Animated.stagger(
-      150,
-      Array.from({ length: 5 }, (_, index) =>
-        Animated.spring(inputsAnim[index], {
-          toValue: 1,
-          useNativeDriver: true,
-          speed: 5,
-        })
-      )
-    ).start();
-  }, []);
-
-useEffect(() => {
-    async function isAllInputsValid(): Promise<boolean> {
-      if(isSubmitted) {
-        let isInputsRequired = Object.entries(requiredFields).some(([key,value],index) => {
-          if(typeof value === "string" && value === 'required') {
-            return true;
-          }
-          if(typeof value === 'object') {
-            for([key,value] of Object.entries(value)) {
-              if(typeof value === 'string' && value === 'required') {
-                return true;
-              }
-            }
-          }
-          return false;
-        })
-
-        return !isInputsRequired;
-      }
-      return false;
-    }
-    async function run() {
-      const isValid = await isAllInputsValid();
-     
-      if(isValid) {
-        const {success,lastInsertRow} =await addToTable(chineseSel)
-        if(success) {
-          console.log("Added word successfully....")
-          console.log("Last Insert RowId : " + lastInsertRow)
-
-        }
-      }
-    }
-
-    run();
-  },[isSubmitted])
-  const stepMap : stepMapper = {
+    const animations = allAnimationsRefs.map((val) => {
+      return Animated.timing(val, {
+        useNativeDriver: true,
+        easing: Easing.out(Easing.ease),
+        toValue: 1,
+      });
+    });
+    Animated.stagger(150, animations).start();
+  }, [allAnimationsRefs]);
+  //Animated helper function
+  const getAnimationStyle = (animValue: Animated.Value) => {
+    return {
+      opacity: animValue,
+      transform: [
+        {
+          translateY: animValue.interpolate({
+            inputRange: [0, 1],
+            outputRange: [-40, 0],
+          }),
+        },
+      ],
+    };
+  };
+  const stepMap: stepMapper = {
     1: (
-       <View>
-              {inputsAnim.map((input, index) => (
-                <Animated.View
-                  key={index}
-                  style={{
-                    opacity: input,
-                    transform: [
-                      {
-                        translateY: input.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [-40, 0],
-                        }),
-                      },
-                    ],
-                  }}
-                >
-                  <InputBox
-                    fieldName={inputs[index].fieldName}
-                    label={inputs[index].label}
-                    placeholder={isSubmitted ? "please fill out this field" : ""}
-                    value={inputs[index].value}
-                    onChangeText={inputs[index].onChangeText}
-                  />
-                </Animated.View>
-              ))}
-              <SelectBox<Formality>
-                label="formality"
-                data={formality}
-                onSelected={setSelectedFormality}
-                value={selectedFormality}
-                fieldName="formality"
-              />
-              <SelectBox<PartsOfSpeech>
-                label="parts of speech"
-                data={partsOfSpeech}
-                onSelected={setSelectedPartsOfSpeech}
-                value={selectedPartsOfSpeech}
-                fieldName="partsOfSpeech"
-              />
-              <SelectBox<ChineseLevel>
-                label="level"
-                data={levels}
-                onSelected={setLevel}
-                value={level}
-                fieldName="level"
-              />
-            </View>
+      <View>
+        {inputs.map((input, i) => (
+          <Animated.View
+            key={i}
+            style={getAnimationStyle(allAnimationsRefs[i])}
+          >
+            <InputBox
+              fieldName={input.fieldName}
+              placeholder={input.placeholder}
+              value={input.value}
+              onChangeText={input.onChangeText}
+              label={input.label}
+            />
+          </Animated.View>
+        ))}
+        <Animated.View
+          style={getAnimationStyle(allAnimationsRefs[totalInputs])}
+        >
+          <SelectBox<Formality>
+            label="formality"
+            data={formality}
+            onSelected={setSelectedFormality}
+            value={selectedFormality}
+            fieldName="formality"
+          />
+        </Animated.View>
+        <Animated.View
+          style={getAnimationStyle(allAnimationsRefs[totalInputs + 1])}
+        >
+          <SelectBox<PartsOfSpeech>
+            label="parts of speech"
+            data={partsOfSpeech}
+            onSelected={setSelectedPartsOfSpeech}
+            value={selectedPartsOfSpeech}
+            fieldName="partsOfSpeech"
+          />
+        </Animated.View>
+        <Animated.View
+          style={getAnimationStyle(allAnimationsRefs[totalInputs + 2])}
+        >
+          <SelectBox<ChineseLevel>
+            label="level"
+            data={levels}
+            onSelected={setLevel}
+            value={level}
+            fieldName="level"
+          />
+        </Animated.View>
+        <Animated.View
+          style={getAnimationStyle(allAnimationsRefs[totalInputs + 3])}
+        >
+          <SelectBox<Frequency>
+            label="frequency"
+            data={frequencies}
+            onSelected={setFrequency}
+            value={frequency}
+            fieldName="frequency"
+          />
+        </Animated.View>
+      </View>
     ),
-    2:(
+    2: (
       <View className="flex-1">
         <ExampleForm language="chinese" />
       </View>
     ),
-  }
+  };
   return (
     <View>
-       {stepMap[currentStep]}
+      {stepMap[currentStep]}
       <View className="flex-row items-center my-8 justify-around">
         <TouchableOpacity
           onPress={() => {
@@ -328,7 +430,7 @@ useEffect(() => {
           }}
           className={currentStep === 1 ? "opacity-0" : "opacity-1"}
         >
-          <AntDesign name="left" size={24} color="black" />
+          <Feather name="chevron-left" size={28} color={theme.textColor} />
         </TouchableOpacity>
         <Text>
           {currentStep} / {totalSteps}
@@ -344,7 +446,7 @@ useEffect(() => {
               : "opacity-1"
           }
         >
-          <AntDesign name="right" size={24} color="black" />
+          <Feather name="chevron-right" size={28} color={theme.textColor} />
         </TouchableOpacity>
       </View>
       {currentStep === totalSteps && (
@@ -354,11 +456,24 @@ useEffect(() => {
             style={{
               backgroundColor: theme.accentColor,
             }}
-            onPress={() => {
-              dispatch(setShouldScrollToStart(true));
+            onPress={async () => {
               dispatch(setSubmitted(true));
-              console.log("chinese selector: ")
-              console.log(chineseSel); 
+              updateRequiredFields();
+              const isValid = isAllInputsValid();
+              console.log(chineseSel);
+              if (!isValid) {
+                Alert.alert(
+                  "Required Fields Are Missing",
+                  "Please fill out all required fields to proceed next."
+                );
+              } else {
+                const { success, lastInsertRow } = await insertData(chineseSel);
+                if (success) {
+                  dispatch(setIsModalVisible(false));
+                } else {
+                  console.log("error inserting to chinese_word. Chinese form");
+                }
+              }
             }}
           >
             <Text
@@ -370,36 +485,36 @@ useEffect(() => {
               Add Word
             </Text>
           </TouchableOpacity>
-          </View>
-                )}
+        </View>
+      )}
     </View>
   );
 };
 
 export default ChineseForm;
-type SelectBoxProps<T extends PartsOfSpeech | Formality | ChineseLevel> = {
+type SelectBoxProps<T> = {
   label: string;
   onSelected: React.Dispatch<React.SetStateAction<T>>;
-  data: SelectListPartsOfSpeech[] | SelectListFormality[] | SelectListLevel[];
+  data: SelectListItem<T>[];
   fieldName: string;
   value: string;
 };
-const SelectBox = <T extends PartsOfSpeech | Formality | ChineseLevel>({
+function SelectBox<T>({
   label,
   onSelected,
   data,
   fieldName,
   value,
-}: SelectBoxProps<T>) => {
+}: SelectBoxProps<T>) {
   const chineseSel = useAppSelector((state: RootState) => state.form.chinese);
   const [selected, setSelected] = React.useState<string[]>([]);
   React.useEffect(() => {
     if (chineseSel?.formality !== undefined)
       setSelected((prev) => [...prev, "formality"]);
-    if (chineseSel?.type !== undefined)
+    if (chineseSel?.parts_of_speech !== undefined)
       setSelected((prev) => [...prev, "partsOfSpeech"]);
-    if( chineseSel?.level !== undefined) 
-      setSelected((prev) => [...prev,"level"]);
+    if (chineseSel?.level !== undefined)
+      setSelected((prev) => [...prev, "level"]);
   }, [chineseSel]);
 
   const isSubmitted = useAppSelector(
@@ -438,18 +553,13 @@ const SelectBox = <T extends PartsOfSpeech | Formality | ChineseLevel>({
       />
       {isSubmitted && !isUserSelected && (
         <View className="gap-1 flex-row items-center">
-          <AntDesign
-            name="exclamationcircle"
-            size={12}
-            color={theme.dangerColor}
-            className="text-rose-400"
-          />
+          <Feather name="alert-triangle" size={14} color={theme.dangerColor} />
           <Text className="text-red-400 text-sm">Required</Text>
         </View>
       )}
     </View>
   );
-};
+}
 type InputBoxProps = {
   label: string;
   placeholder: string;
@@ -462,37 +572,26 @@ const InputBox = ({
   placeholder,
   value,
   onChangeText,
-  fieldName
+  fieldName,
 }: InputBoxProps) => {
   const isSubmitted = useAppSelector(
-      (state: RootState) => state.form.isSubmitted
-    );
-    const requiredFields = useAppSelector(
-      (state: RootState) => state.form.requiredFields
-    );
-  
-    const dispatch = useAppDispatch();
-    const theme = useTheme();
-    
-  useEffect(() => {
-      if (isSubmitted) {
-        if (requiredFields[fieldName] === undefined) {
-          dispatch(setRequiredFields({ [fieldName]: "required" }));
-        } else {
-          dispatch(
-            setRequiredFields({
-              [fieldName]: value === "" ? "required" : "",
-            })
-          );
-        }
-      }
-    }, [isSubmitted]);
+    (state: RootState) => state.form.isSubmitted
+  );
+  const requiredFields = useAppSelector(
+    (state: RootState) => state.form.requiredFields
+  );
+
+  const theme = useTheme();
+
   return (
     <View className="w-full  mb-4 gap-1">
       <Text className="text-sm" style={{ color: theme.mutedColor }}>
         {label}
       </Text>
       <TextInput
+        placeholderTextColor={theme.faintedColor}
+        selectionColor={theme.dangerColor}
+        cursorColor={theme.faintedColor}
         style={{
           backgroundColor: theme.secondaryColor,
           color: theme.textColor,
@@ -500,23 +599,18 @@ const InputBox = ({
         }}
         value={value}
         onChangeText={(text) => onChangeText(text)}
-        // placeholder={placeholder}
-
-        className={`rounded-lg h-14 px-4 ${
+        className={`rounded-lg py-4 min-h-[40px] px-4 ${
           requiredFields[fieldName] === "required" && isSubmitted
             ? "border"
             : ""
         }`}
+        placeholder={placeholder}
+        multiline
       />
-      
+
       {isSubmitted && requiredFields[fieldName] === "required" && (
         <View className="gap-1 flex-row items-center">
-          <AntDesign
-            name="exclamationcircle"
-            size={12}
-            color={theme.dangerColor}
-            className="text-rose-400"
-          />
+          <Feather name="alert-triangle" size={14} color={theme.dangerColor} />
           <Text className="text-red-400 text-sm">Required</Text>
         </View>
       )}
