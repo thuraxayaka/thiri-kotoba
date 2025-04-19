@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Feather from "@expo/vector-icons/Feather";
 import useSpeech from "@/hooks/Speech";
 import { Map } from "@/types";
-
+import { useRouter } from "expo-router";
 interface Props {
   word: string;
   partsOfSpeech: string;
@@ -28,6 +28,7 @@ const WordDetails = ({
   selectedLanguage,
 }: Props) => {
   const theme = useTheme();
+  const router = useRouter();
   const { speak } = useSpeech();
 
   const partsOfSpeechType: Map<string> = {
@@ -111,8 +112,17 @@ const WordDetails = ({
             {tags.map((tag, i) => {
               return (
                 <View className="flex-row items-center" key={i}>
-                  <TouchableOpacity onPress={() => {}}>
-                    <Text className="underline">{tag}</Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      router.push("/categories");
+                    }}
+                  >
+                    <Text
+                      className="border-b-hairline border-fuchsia-400"
+                      style={{ color: theme.accentColor }}
+                    >
+                      {tag}
+                    </Text>
                   </TouchableOpacity>
                   {i !== tags.length - 1 && <Text>,</Text>}
                 </View>

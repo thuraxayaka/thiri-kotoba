@@ -28,7 +28,7 @@ const migrateDb = async (db: SQLiteDatabase) => {
   try {
     result = await db.getFirstAsync<{
       user_version: number;
-    }>("PRAGMA user_version=0");
+    }>("PRAGMA user_version = 0");
 
     const currentDbVersion = result?.user_version ?? 0;
     if (currentDbVersion >= DATABASE_VERSION) {

@@ -100,7 +100,7 @@ export const useSqlite = () => {
               $synonyms: Array.isArray(data.synonyms)
                 ? data.synonyms.join(",")
                 : data.synonyms,
-              $antonyms: Array.isArray(data.categories)
+              $antonyms: Array.isArray(data.antonyms)
                 ? data.antonyms.join(",")
                 : data.antonyms,
               $frequency: data.frequency,
@@ -153,7 +153,7 @@ export const useSqlite = () => {
                 $synonyms: Array.isArray(wordData.synonyms)
                   ? wordData.synonyms.join(",")
                   : wordData.synonyms,
-                $antonyms: Array.isArray(wordData.anotnyms)
+                $antonyms: Array.isArray(wordData.antonyms)
                   ? wordData.antonyms.join(",")
                   : wordData.antonyms,
                 $frequency: wordData.frequency,

@@ -49,11 +49,12 @@ export default function Index() {
       }
 
       const { completedCount, totalCount, loading } = await setup();
+      console.log("loading..." + loading);
 
       console.log(`imported ${completedCount}/${totalCount}`);
     }
     async function run() {
-      await clearAll();
+      // await clearAll();
       await populate();
       SecureStore.setItem("populated", "true");
     }

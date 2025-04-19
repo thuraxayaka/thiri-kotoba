@@ -20,17 +20,18 @@ import { changeTheme } from "@/stores/settingSlice";
 import { WordDetails, Language, Map, Example, Word } from "@/types";
 import { ScrollView } from "react-native";
 
-type modalInput = {
-  label: string;
-  inputText: string | any;
+type ProcessedDataType = {
+  id: string | number | undefined;
+  word: string;
 };
-
 export default function DetailsScreen() {
   const { id, language } = useLocalSearchParams();
   const lang: Language = language as Language;
   const [favorite, setFavorite] = useState<boolean>(false);
   const router = useRouter();
   const [wordDetails, setWordDetails] = useState<Partial<WordDetails>>({});
+  const [synonyms, setSynonyms] = useState<ProcessedDataType[]>([]);
+  const [antonyms, setAntonyms] = useState<ProcessedDataType[]>([]);
   const db = useSQLiteContext();
   const theme = useTheme();
 
@@ -44,6 +45,7 @@ export default function DetailsScreen() {
           );
           if (!result) throw `word_id [${id}] doesn't exist`;
           const word = result as Word;
+
           const examples: Example[] = await db.getAllAsync(
             `SELECT * FROM japanese_example WHERE word_id = ${id}`
           );
@@ -106,8 +108,65 @@ export default function DetailsScreen() {
         console.log(err);
       }
     }
-    getData();
+
+    async function runAction() {
+      await getData();
+    }
+    runAction();
   }, []);
+
+  useEffect(() => {
+    async function findWord() {
+      if (Array.isArray(wordDetails.word?.synonyms)) {
+        wordDetails.word?.synonyms?.forEach(async (synonym) => {
+          const index = synonyms.findIndex((item) => item.word === synonym);
+          if (index !== -1) return;
+          const result = await getWordId(synonym);
+          setSynonyms((prev) => {
+            return [...prev, { id: result?.id, word: synonym }];
+          });
+        });
+      }
+      if (Array.isArray(wordDetails.word?.antonyms)) {
+        wordDetails.word?.antonyms?.forEach(async (antonym) => {
+          const index = antonyms.findIndex((item) => item.word === antonym);
+          if (index !== -1) return;
+          const result = await getWordId(antonym);
+          setAntonyms((prev) => [...prev, { id: result?.id, word: antonym }]);
+        });
+      }
+    }
+
+    findWord();
+  }, [wordDetails]);
+
+  useEffect(() => {
+    console.log("antonyms:");
+    console.log(antonyms);
+    console.log("synonyms:");
+    console.log(synonyms);
+  }, [synonyms, antonyms]);
+  const getWordId = async (
+    value: string
+  ): Promise<{ id: string | number } | null> => {
+    try {
+      const query = `SELECT * FROM ${lang}_word WHERE word=$word;`;
+      const statement = await db.prepareAsync(query);
+
+      const execResult = await statement.executeAsync({
+        $word: value,
+      });
+      const result = await execResult.getFirstAsync();
+      if (result) {
+        const word = result as any;
+        return { id: word.id };
+      }
+    } catch (err) {
+      return null;
+    }
+
+    return null;
+  };
 
   const getStyledSentences = (input: string): JSX.Element => {
     const formattedString = input.split(/(\(.*?\))/g).map((part, index) => {
@@ -138,6 +197,10 @@ export default function DetailsScreen() {
   }, [theme]);
   const goBack = () => {
     router.back();
+  };
+
+  const goTo = (id: string | number) => {
+    router.push(`/details/${id}?language=${encodeURIComponent(lang)}`);
   };
 
   return (
@@ -219,37 +282,70 @@ export default function DetailsScreen() {
               <View className="py-4">
                 <View className=" flex-row gap-1 mb-2">
                   <Text>Synonyms:</Text>
-                  {Array.isArray(wordDetails.word?.synonyms) &&
-                    wordDetails.word?.synonyms.length > 0 &&
-                    wordDetails.word.synonyms.map((synonym, i) => {
+
+                  {synonyms.map((value, i) => {
+                    if (value.id === undefined) {
                       return (
-                        <View className="flex-row" key={i}>
-                          <TouchableOpacity onPress={() => {}}>
-                            <Text className="text-sky-400">{synonym}</Text>
-                          </TouchableOpacity>
-                          {i + 1 !== wordDetails.word?.synonyms?.length && (
-                            <Text>,</Text>
-                          )}
+                        <View className="flex-row items-center flex-wrap">
+                          <Text key={i} style={{ color: theme.mutedColor }}>
+                            {value.word}
+                          </Text>
+                          {i + 1 !== synonyms.length && <Text>,</Text>}
                         </View>
                       );
-                    })}
+                    }
+
+                    return (
+                      <View className="flex-row items-center flex-wrap">
+                        <TouchableOpacity
+                          onPress={() => {
+                            if (value.id) goTo(value.id);
+                          }}
+                        >
+                          <Text
+                            className="border-b-hairline border-fuchsia-400"
+                            style={{ color: theme.accentColor }}
+                          >
+                            {value.word}
+                          </Text>
+                        </TouchableOpacity>
+                        {i + 1 !== synonyms.length && <Text>,</Text>}
+                      </View>
+                    );
+                  })}
                 </View>
                 <View className=" flex-row gap-1">
                   <Text>Antonyms:</Text>
-                  {Array.isArray(wordDetails.word?.antonyms) &&
-                    wordDetails.word?.antonyms.length > 0 &&
-                    wordDetails.word.antonyms.map((antonym, i) => {
+                  {antonyms.map((value, i) => {
+                    if (value.id === undefined) {
                       return (
-                        <View className="flex-row" key={i}>
-                          <TouchableOpacity onPress={() => {}}>
-                            <Text className="text-sky-400">{antonym}</Text>
-                          </TouchableOpacity>
-                          {i + 1 !== wordDetails.word?.antonyms?.length && (
-                            <Text>,</Text>
-                          )}
+                        <View className="flex-row items-center flex-wrap">
+                          <Text key={i} style={{ color: theme.mutedColor }}>
+                            {value.word}
+                          </Text>
+                          {i + 1 !== antonyms.length && <Text>,</Text>}
                         </View>
                       );
-                    })}
+                    }
+
+                    return (
+                      <View className="flex-row items-center flex-wrap">
+                        <TouchableOpacity
+                          onPress={() => {
+                            if (value.id) goTo(value.id);
+                          }}
+                        >
+                          <Text
+                            className="border-b-hairline border-fuchsia-400"
+                            style={{ color: theme.accentColor }}
+                          >
+                            {value.word}
+                          </Text>
+                        </TouchableOpacity>
+                        {i + 1 !== antonyms.length && <Text>,</Text>}
+                      </View>
+                    );
+                  })}
                 </View>
               </View>
             </View>
