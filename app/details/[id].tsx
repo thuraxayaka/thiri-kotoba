@@ -10,14 +10,21 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "@/hooks/Theme";
 import LanguageDetails from "@/components/LanguageDetails";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useSqlite } from "@/hooks/Database";
 import { useSQLiteContext } from "expo-sqlite";
 import Feather from "@expo/vector-icons/Feather";
 import { useAppDispatch, useAppSelector } from "@/hooks/Hook";
-import { changeTheme } from "@/stores/settingSlice";
-import { WordDetails, Language, Map, Example, Word } from "@/types";
+
+import {
+  WordDetails,
+  Language,
+  Map,
+  Example,
+  Word,
+  JapaneseWord,
+  ChineseWord,
+} from "@/types";
 import { ScrollView } from "react-native";
 
 type ProcessedDataType = {
@@ -32,78 +39,72 @@ export default function DetailsScreen() {
   const [wordDetails, setWordDetails] = useState<Partial<WordDetails>>({});
   const [synonyms, setSynonyms] = useState<ProcessedDataType[]>([]);
   const [antonyms, setAntonyms] = useState<ProcessedDataType[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
   const db = useSQLiteContext();
   const theme = useTheme();
 
   useEffect(() => {
     async function getData() {
       try {
-        if (lang === "japanese") {
-          const result = await db.getFirstAsync(
-            `SELECT id,word,parts_of_speech,categories,english,burmese,definition,level,formality,
-             pronunciation,'japanese' as language,romaji,synonyms,antonyms,frequency,favorite FROM japanese_word WHERE id = ${id};`
-          );
-          if (!result) throw `word_id [${id}] doesn't exist`;
-          const word = result as Word;
-
-          const examples: Example[] = await db.getAllAsync(
-            `SELECT * FROM japanese_example WHERE word_id = ${id}`
-          );
-
-          if (typeof word.categories === "string") {
-            word.categories = word.categories.split(",");
+        setLoading(true);
+        let result: any;
+        switch (lang) {
+          case "japanese":
+            {
+              result = await db.getFirstAsync<JapaneseWord>(
+                `SELECT id,word,parts_of_speech,english,burmese,definition,level,formality,
+               pronunciation,'japanese' as language,romaji,synonyms,antonyms,frequency,favorite FROM japanese_word WHERE id = ${id};`
+              );
+            }
+            break;
+          case "chinese":
+            {
+              result = await db.getFirstAsync<ChineseWord>(
+                `SELECT id,word,parts_of_speech,english,burmese,definition,level,formality,
+              pinyin as pronunciation,synonyms,antonyms,frequency,favorite,'chinese' as language FROM chinese_word WHERE id = ${id};`
+              );
+            }
+            break;
+          case "korean": {
+            result = await db.getFirstAsync(
+              `SELECT id,word,parts_of_speech,english,burmese,definition,level,formality,
+               romaji as pronunciation,synonyms,antonyms,frequency,favorite,'korean' as language FROM korean_word WHERE id = ${id};`
+            );
           }
-          if (typeof word.synonyms === "string") {
-            word.synonyms = word.synonyms.split(",");
-          }
-          if (typeof word.antonyms === "string") {
-            word.antonyms = word.antonyms.split(",");
-          }
-
-          setWordDetails({ word, examples });
-        } else if (lang === "chinese") {
-          const result = await db.getFirstAsync(
-            `SELECT id,word,parts_of_speech,categories,english,burmese,definition,level,formality,
-            pinyin as pronunciation,synonyms,antonyms,frequency,favorite,'chinese' as language FROM chinese_word WHERE id = ${id};`
-          );
-          if (!result) throw `word_id [${id}] doesn't exist`;
-          const word = result as Word;
-          const examples: Example[] = await db.getAllAsync(
-            `SELECT * FROM chinese_example WHERE word_id = ${id}`
-          );
-          if (typeof word.categories === "string") {
-            word.categories = word.categories.split(",");
-          }
-          if (typeof word.synonyms === "string") {
-            word.synonyms = word.synonyms.split(",");
-          }
-          if (typeof word.antonyms === "string") {
-            word.antonyms = word.antonyms.split(",");
-          }
-
-          setWordDetails({ word, examples });
-        } else {
-          const result = await db.getFirstAsync(
-            `SELECT id,word,parts_of_speech,categories,english,burmese,definition,level,formality,
-             romaji as pronunciation,synonyms,antonyms,frequency,favorite,'korean' as language FROM korean_word WHERE id = ${id};`
-          );
-          if (!result) throw `word_id [${id}] doesn't exist`;
-          const word = result as Word;
-          const examples: Example[] = await db.getAllAsync(
-            `SELECT * FROM korean_example WHERE word_id = ${id}`
-          );
-          if (typeof word.categories === "string") {
-            word.categories = word.categories.split(",");
-          }
-          if (typeof word.synonyms === "string") {
-            word.synonyms = word.synonyms.split(",");
-          }
-          if (typeof word.antonyms === "string") {
-            word.antonyms = word.antonyms.split(",");
-          }
-
-          setWordDetails({ word, examples });
         }
+
+        const categories = await db.getAllAsync(
+          `SELECT category FROM category JOIN word_category ON category.id=word_category.category_id WHERE word_id=$id AND word_category.language=$language`,
+          {
+            $id: id as string,
+            $language: lang,
+          }
+        );
+
+        const processedCategories = categories.map(
+          (value: any) => value.category
+        );
+        if (typeof result.synonyms === "string") {
+          result.synonyms = result.synonyms.split(",");
+        }
+        if (typeof result.antonyms === "string") {
+          result.antonyms = result.antonyms.split(",");
+        }
+        const examples: Example[] = await db.getAllAsync(
+          `SELECT * FROM ${lang}_example WHERE word_id = ${id}`
+        );
+        result.synonyms?.map((synonym: any) => {
+          setSynonyms((prev) => [...prev, { id: undefined, word: synonym }]);
+        });
+        result.antonyms?.map((antonym: any) => {
+          setAntonyms((prev) => [...prev, { id: undefined, word: antonym }]);
+        });
+
+        setWordDetails({
+          word: { ...result, categories: processedCategories },
+          examples,
+        });
+        setLoading(false);
       } catch (err) {
         console.log(err);
       }
@@ -117,35 +118,29 @@ export default function DetailsScreen() {
 
   useEffect(() => {
     async function findWord() {
-      if (Array.isArray(wordDetails.word?.synonyms)) {
-        wordDetails.word?.synonyms?.forEach(async (synonym) => {
-          const index = synonyms.findIndex((item) => item.word === synonym);
-          if (index !== -1) return;
-          const result = await getWordId(synonym);
-          setSynonyms((prev) => {
-            return [...prev, { id: result?.id, word: synonym }];
-          });
+      if (!loading) setSynonyms([]);
+      setAntonyms([]);
+      for (let item of synonyms) {
+        const result = await getWordId(item.word);
+        setSynonyms((prev) => {
+          return [...prev, { id: result?.id, word: item.word }];
         });
       }
-      if (Array.isArray(wordDetails.word?.antonyms)) {
-        wordDetails.word?.antonyms?.forEach(async (antonym) => {
-          const index = antonyms.findIndex((item) => item.word === antonym);
-          if (index !== -1) return;
-          const result = await getWordId(antonym);
-          setAntonyms((prev) => [...prev, { id: result?.id, word: antonym }]);
+
+      for (let item of antonyms) {
+        const result = await getWordId(item.word);
+        setAntonyms((prev) => {
+          return [...prev, { id: result?.id, word: item.word }];
         });
       }
     }
 
     findWord();
-  }, [wordDetails]);
+  }, [loading]);
 
   useEffect(() => {
-    console.log("antonyms:");
-    console.log(antonyms);
-    console.log("synonyms:");
     console.log(synonyms);
-  }, [synonyms, antonyms]);
+  }, [synonyms]);
   const getWordId = async (
     value: string
   ): Promise<{ id: string | number } | null> => {
@@ -203,16 +198,24 @@ export default function DetailsScreen() {
     router.push(`/details/${id}?language=${encodeURIComponent(lang)}`);
   };
 
+  const getStyles = (flag: boolean) => {
+    if (flag) {
+      return {
+        className: "border-b-hairline border-fuchsia-400",
+        style: { color: theme.accentColor },
+      };
+    } else {
+      return {
+        className: "",
+        style: { color: theme.mutedColor },
+      };
+    }
+  };
   return (
     <SafeAreaView edges={["bottom", "left", "right"]} style={styles.container}>
       <ScrollView className="gap-4 px-4">
         <View className="flex-row mb-4 justify-between items-center">
-          <Ionicons
-            name="arrow-back-outline"
-            size={28}
-            color="black"
-            onPress={goBack}
-          />
+          <Feather name="arrow-left" size={28} color="black" onPress={goBack} />
         </View>
 
         <View>
@@ -230,8 +233,18 @@ export default function DetailsScreen() {
                   categories={wordDetails.word.categories}
                 />
               )}
-              {(wordDetails.word?.language === "korean" ||
-                wordDetails.word?.language === "chinese") && (
+              {wordDetails.word?.language === "korean" && (
+                <LanguageDetails
+                  word={wordDetails.word.word}
+                  partsOfSpeech={wordDetails.word.parts_of_speech}
+                  level={wordDetails.word.level}
+                  reading={wordDetails.word.pronunciation}
+                  formality={wordDetails.word.formality}
+                  selectedLanguage={lang}
+                  categories={wordDetails.word.categories}
+                />
+              )}
+              {wordDetails.word?.language === "chinese" && (
                 <LanguageDetails
                   word={wordDetails.word.word}
                   partsOfSpeech={wordDetails.word.parts_of_speech}
@@ -284,27 +297,19 @@ export default function DetailsScreen() {
                   <Text>Synonyms:</Text>
 
                   {synonyms.map((value, i) => {
-                    if (value.id === undefined) {
-                      return (
-                        <View className="flex-row items-center flex-wrap">
-                          <Text key={i} style={{ color: theme.mutedColor }}>
-                            {value.word}
-                          </Text>
-                          {i + 1 !== synonyms.length && <Text>,</Text>}
-                        </View>
-                      );
-                    }
-
+                    const flag = value.id ? true : false;
+                    // console.log({ flag });
+                    // console.warn("Word :" + value.word);
                     return (
-                      <View className="flex-row items-center flex-wrap">
+                      <View className="flex-row items-center flex-wrap" key={i}>
                         <TouchableOpacity
                           onPress={() => {
                             if (value.id) goTo(value.id);
                           }}
                         >
                           <Text
-                            className="border-b-hairline border-fuchsia-400"
-                            style={{ color: theme.accentColor }}
+                            className={getStyles(flag).className}
+                            style={getStyles(flag).style}
                           >
                             {value.word}
                           </Text>
@@ -314,30 +319,20 @@ export default function DetailsScreen() {
                     );
                   })}
                 </View>
-                <View className=" flex-row gap-1">
+                <View className="flex-row gap-1">
                   <Text>Antonyms:</Text>
                   {antonyms.map((value, i) => {
-                    if (value.id === undefined) {
-                      return (
-                        <View className="flex-row items-center flex-wrap">
-                          <Text key={i} style={{ color: theme.mutedColor }}>
-                            {value.word}
-                          </Text>
-                          {i + 1 !== antonyms.length && <Text>,</Text>}
-                        </View>
-                      );
-                    }
-
+                    const flag = value.id ? true : false;
                     return (
-                      <View className="flex-row items-center flex-wrap">
+                      <View className="flex-row items-center flex-wrap" key={i}>
                         <TouchableOpacity
                           onPress={() => {
                             if (value.id) goTo(value.id);
                           }}
                         >
                           <Text
-                            className="border-b-hairline border-fuchsia-400"
-                            style={{ color: theme.accentColor }}
+                            className={getStyles(flag).className}
+                            style={getStyles(flag).style}
                           >
                             {value.word}
                           </Text>

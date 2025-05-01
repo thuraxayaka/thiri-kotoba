@@ -1,14 +1,14 @@
 import { StyleSheet, Text, View } from "react-native";
 import React from "react";
-
+import { useLocalSearchParams } from "expo-router";
 const Category = () => {
+  const { category } = useLocalSearchParams();
+  console.log(category);
   return (
     <View>
-      <Text>category specific</Text>
+      <Text className="text-[1.8em]">Category: {category}</Text>
     </View>
   );
 };
 
 export default Category;
-
-const styles = StyleSheet.create({});

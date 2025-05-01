@@ -19,7 +19,7 @@ import { useSqlite } from "@/hooks/Database";
 import * as SecureStore from "expo-secure-store";
 import MultistepForm from "@/components/Form/MultiStepForm";
 import { reset, setIsModalVisible } from "@/stores/formSlice";
-
+import { useFonts } from "expo-font";
 export default function Index() {
   const db = useSQLiteContext();
   const dispatch = useAppDispatch<AppDispatch>();
@@ -54,7 +54,7 @@ export default function Index() {
       console.log(`imported ${completedCount}/${totalCount}`);
     }
     async function run() {
-      // await clearAll();
+      await clearAll();
       await populate();
       SecureStore.setItem("populated", "true");
     }

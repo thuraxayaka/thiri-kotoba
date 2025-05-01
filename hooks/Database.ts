@@ -4,7 +4,7 @@ import koreanData from "@/constants/koreandummy.json";
 import chineseData from "@/constants/chinesedummy.json";
 import { useState } from "react";
 import * as SecureStore from "expo-secure-store";
-import { Example, Word } from "@/types";
+import { ChineseWord, Example, JapaneseWord, KoreanWord, Word } from "@/types";
 
 const removeDiacratics = (text: string) => {
   return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -73,176 +73,190 @@ export const useSqlite = () => {
   async function insertData(
     data: any
   ): Promise<{ success: boolean; lastInsertRow: number | string }> {
-    switch (data.language) {
-      case "japanese":
-        try {
-          const addJapaneseWordStatement = await db.prepareAsync(
-            `INSERT INTO japanese_word(word,parts_of_speech,categories,english,burmese,definition,level,formality,pronunciation,romaji,synonyms,antonyms,frequency,favorite)
-             VALUES ($word,$parts_of_speech,$categories,$english,$burmese,$definition,$level,$formality,$pronunciation,$romaji,$synonyms,$antonyms,$frequency,$favorite);`
-          );
-          const addJapaneseExampleStatement = await db.prepareAsync(
-            `INSERT INTO japanese_example(word_id,sentence,pronunciation,translation) VALUES ($wordId, $sentence, $pronunciation, $translation);`
-          );
-          let resultOfJapaneseWord =
-            await addJapaneseWordStatement.executeAsync({
-              $word: data.word,
-              $parts_of_speech: data.partsOfSpeech,
-              $categories: Array.isArray(data.categories)
-                ? data.categories.join(",")
-                : data.categories,
-              $burmese: data.burmese,
-              $english: data.english,
-              $definition: data.definition,
-              $level: data.level,
-              $formality: data.formality,
-              $pronunciation: data.pronunciation,
-              $romaji: data.romaji,
-              $synonyms: Array.isArray(data.synonyms)
-                ? data.synonyms.join(",")
-                : data.synonyms,
-              $antonyms: Array.isArray(data.antonyms)
-                ? data.antonyms.join(",")
-                : data.antonyms,
-              $frequency: data.frequency,
-              $favorite: 0,
-            });
+    const japaneseWordInsertionStatement = await db.prepareAsync(
+      `INSERT INTO japanese_word(word,parts_of_speech,english,burmese,definition,level,formality,pronunciation,romaji,synonyms,antonyms,frequency,favorite)
+       VALUES ($word,$parts_of_speech,$english,$burmese,$definition,$level,$formality,$pronunciation,$romaji,$synonyms,$antonyms,$frequency,$favorite);`
+    );
+    const chineseWordInsertionStatement = await db.prepareAsync(
+      `INSERT INTO chinese_word(word,parts_of_speech,english,burmese,definition,level,formality,pinyin,pinyin_simplified,synonyms,antonyms,frequency,favorite)
+         VALUES ($word,$parts_of_speech,$english,$burmese,$definition,$level,$formality,$pinyin,$pinyin_simplified,$synonyms,$antonyms,$frequency,$favorite);`
+    );
+    const koreanWordInsertionStatement = await db.prepareAsync(
+      `INSERT INTO korean_word(word,parts_of_speech,english,burmese,definition,level,formality,romaji,synonyms,antonyms,frequency,favorite)
+     VALUES ($word,$parts_of_speech,$english,$burmese,$definition,$level,$formality,$romaji,$synonyms,$antonyms,$frequency,$favorite);`
+    );
 
-          for (let i = 0; i < data.examples.length; i++) {
-            await addJapaneseExampleStatement.executeAsync({
-              $wordId: resultOfJapaneseWord.lastInsertRowId,
-              $sentence: data.examples[i].sentence,
-              $pronunciation: data.examples[i].pronunciation,
-              $translation: data.examples[i].translation,
-            });
+    const exampleInsertionStatement = await db.prepareAsync(
+      `INSERT INTO ${data.language}_example(word_id,sentence,pronunciation,translation) VALUES ($wordId, $sentence, $pronunciation, $translation);`
+    );
+    const wordCategoryInsertionStatement = await db.prepareAsync(
+      `INSERT INTO word_category(word_id,language,category_id) VALUES($word_id,$language,$category_id);`
+    );
+    const executeStatement = async (): Promise<{ lastInsertRow: number }> => {
+      let result: any;
+      switch (data.language) {
+        case "japanese":
+          {
+            try {
+              result =
+                await japaneseWordInsertionStatement.executeAsync<JapaneseWord>(
+                  {
+                    $word: data.word,
+                    $parts_of_speech: data.partsOfSpeech,
+                    $burmese: data.burmese,
+                    $english: data.english,
+                    $definition: data.definition,
+                    $level: data.level,
+                    $formality: data.formality,
+                    $pronunciation: data.pronunciation,
+                    $romaji: data.romaji,
+                    $synonyms: Array.isArray(data.synonyms)
+                      ? data.synonyms.join(",")
+                      : data.synonyms,
+                    $antonyms: Array.isArray(data.antonyms)
+                      ? data.antonyms.join(",")
+                      : data.antonyms,
+                    $frequency: data.frequency,
+                    $favorite: 0,
+                  }
+                );
+            } catch (err) {
+              console.error(
+                "Error: Inserting japanese_word fields.Caused by " + err
+              );
+            }
           }
-          return {
-            success: true,
-            lastInsertRow: resultOfJapaneseWord.lastInsertRowId,
-          };
-        } catch (err) {
-          console.error(`@/hooks/Database.` + err);
-        }
-        break;
-      case "chinese":
-        {
+          break;
+        case "chinese":
+          {
+            try {
+              result =
+                await chineseWordInsertionStatement.executeAsync<ChineseWord>({
+                  $word: data.word,
+                  $parts_of_speech: data.partsOfSpeech,
+                  $burmese: data.burmese,
+                  $english: data.english,
+                  $definition: data.definition,
+                  $level: data.level,
+                  $formality: data.formality,
+                  $pinyin: data.pinyin,
+                  $pinyin_simplified: removeDiacratics(data.pinyin),
+                  $synonyms: Array.isArray(data.synonyms)
+                    ? data.synonyms.join(",")
+                    : data.synonyms,
+                  $antonyms: Array.isArray(data.antonyms)
+                    ? data.antonyms.join(",")
+                    : data.antonyms,
+                  $frequency: data.frequency,
+                  $favorite: 0,
+                });
+            } catch (err) {
+              console.error(
+                "Error: Inserting to chinese_word.Caused by " + err
+              );
+            }
+          }
+          break;
+        case "korean": {
           try {
-            const wordData = data;
-            const addChineseWordStatement = await db.prepareAsync(
-              `INSERT INTO chinese_word(word,parts_of_speech,categories,english,burmese,definition,level,formality,pinyin,pinyin_simplified,synonyms,antonyms,frequency,favorite)
-                 VALUES ($word,$parts_of_speech,$categories,$english,$burmese,$definition,$level,$formality,$pinyin,$pinyin_simplified,$synonyms,$antonyms,$frequency,$favorite);`
-            );
-
-            const addChineseExampleStatement = await db.prepareAsync(
-              `INSERT INTO chinese_example(word_id,sentence,pronunciation,translation) VALUES ($wordId,$sentence,$pronunciation,$translation);`
-            );
-
-            let resultOfChineseWord =
-              await addChineseWordStatement.executeAsync({
-                $word: wordData.word,
-                $parts_of_speech: wordData.partsOfSpeech,
-                $categories: Array.isArray(wordData.categories)
-                  ? wordData.categories.join(",")
-                  : wordData.categories,
-                $burmese: wordData.burmese,
-                $english: wordData.english,
-                $definition: wordData.definition,
-                $level: wordData.level,
-                $formality: wordData.formality,
-                $pinyin: wordData.pinyin,
-                $pinyin_simplified: removeDiacratics(wordData.pinyin),
-                $synonyms: Array.isArray(wordData.synonyms)
-                  ? wordData.synonyms.join(",")
-                  : wordData.synonyms,
-                $antonyms: Array.isArray(wordData.antonyms)
-                  ? wordData.antonyms.join(",")
-                  : wordData.antonyms,
-                $frequency: wordData.frequency,
+            result =
+              await koreanWordInsertionStatement.executeAsync<KoreanWord>({
+                $word: data.word,
+                $parts_of_speech: data.partsOfSpeech,
+                $burmese: data.burmese,
+                $english: data.english,
+                $definition: data.definition,
+                $level: data.level,
+                $formality: data.formality,
+                $romaji: data.romaji,
+                $synonyms: Array.isArray(data.synonyms)
+                  ? data.synonyms.join(",")
+                  : data.synonyms,
+                $antonyms: Array.isArray(data.antonyms)
+                  ? data.antonyms.join(",")
+                  : data.antonyms,
+                $frequency: data.frequency,
                 $favorite: 0,
               });
-            for (let i = 0; i < wordData.examples.length; i++) {
-              await addChineseExampleStatement.executeAsync({
-                $wordId: resultOfChineseWord.lastInsertRowId,
-                $sentence: wordData.examples[i].sentence,
-                $pronunciation: wordData.examples[i].pronunciation,
-                $translation: wordData.examples[i].translation,
-              });
-            }
-            return {
-              success: true,
-              lastInsertRow: resultOfChineseWord.lastInsertRowId,
-            };
           } catch (err) {
-            console.log(
-              "error inserting to chinese_word in Database.ts.Caused by: " + err
-            );
+            console.error("Error: Inserting to korean_word.Caused by " + err);
           }
-        }
-        break;
-      case "korean": {
-        try {
-          const wordData = data;
-          const addKoreanWordStatement = await db.prepareAsync(
-            `INSERT INTO korean_word(word,parts_of_speech,categories,english,burmese,definition,level,formality,romaji,synonyms,antonyms,frequency,favorite)
-           VALUES ($word,$parts_of_speech,$categories,$english,$burmese,$definition,$level,$formality,$romaji,$synonyms,$antonyms,$frequency,$favorite);`
-          );
-          const addKoreanExampleStatement = await db.prepareAsync(
-            `INSERT INTO korean_example(word_id,sentence,pronunciation,translation) VALUES ($wordId,$sentence,$pronunciation,$translation);`
-          );
-          let resultOfKoreanWord = await addKoreanWordStatement.executeAsync({
-            $word: wordData.word,
-            $parts_of_speech: wordData.partsOfSpeech,
-            $categories: Array.isArray(wordData.categories)
-              ? wordData.categories.join(",")
-              : wordData.categories,
-            $burmese: wordData.burmese,
-            $english: wordData.english,
-            $definition: wordData.definition,
-            $level: wordData.level,
-            $formality: wordData.formality,
-            $romaji: wordData.romaji,
-            $synonyms: Array.isArray(wordData.synonyms)
-              ? wordData.synonyms.join(",")
-              : wordData.synonyms,
-            $antonyms: Array.isArray(wordData.antonyms)
-              ? wordData.antonyms.join(",")
-              : wordData.antonyms,
-            $frequency: wordData.frequency,
-            $favorite: 0,
-          });
-          for (let i = 0; i < wordData.examples.length; i++) {
-            await addKoreanExampleStatement.executeAsync({
-              $wordId: resultOfKoreanWord.lastInsertRowId,
-              $sentence: wordData.examples[i].sentence,
-              $pronunciation: wordData.examples[i].pronunciation,
-              $translation: wordData.examples[i].translation,
-            });
-          }
-
-          return {
-            success: true,
-            lastInsertRow: resultOfKoreanWord.lastInsertRowId,
-          };
-        } catch (err) {
-          console.log(
-            "error populating data to korean_word in Database.ts.Caused by:" +
-              err
-          );
         }
       }
+
+      const existingCategories = await db.getAllAsync<{
+        id: number;
+        category: string;
+      }>("SELECT * FROM category;");
+
+      const processCategories = async (categories: string | string[]) => {
+        const categoryList = Array.isArray(categories)
+          ? categories
+          : categories.split(",");
+        for (let category of categoryList) {
+          const trimmedCategory = category.trim();
+          if (!trimmedCategory) continue;
+
+          let categoryId: number | undefined;
+          const existingCategory = existingCategories.find(
+            (value) => value.category === trimmedCategory
+          );
+
+          if (existingCategory) {
+            categoryId = existingCategory.id;
+          } else {
+            const insertCategoryStatement = await db.prepareAsync(
+              "INSERT INTO category(category) VALUES ($category);"
+            );
+            const resultOfCategoryInsert =
+              await insertCategoryStatement.executeAsync({
+                $category: trimmedCategory,
+              });
+            categoryId = resultOfCategoryInsert.lastInsertRowId;
+          }
+          try {
+            await wordCategoryInsertionStatement.executeAsync({
+              $word_id: result.lastInsertRowId,
+              $language: data.language,
+              $category_id: categoryId,
+            });
+          } catch (err) {
+            console.error("Error: Inserting to word_category.Caused by " + err);
+          }
+        }
+      };
+      try {
+        await processCategories(data.categories);
+      } catch (err) {
+        console.error(
+          "Error: Processng categories in Database.ts . Casued by " + err
+        );
+      }
+
+      for (let example of data.examples) {
+        try {
+          await exampleInsertionStatement.executeAsync({
+            $wordId: result.lastInsertRowId,
+            $sentence: example.sentence,
+            $pronunciation: example.pronunciation,
+            $translation: example.translation,
+          });
+        } catch (err) {
+          console.error("Error: Inserting into examples.Caused by: " + err);
+        }
+      }
+
+      return { lastInsertRow: result.lastInsertRowId };
+    };
+
+    try {
+      const { lastInsertRow } = await executeStatement();
+      return { success: true, lastInsertRow };
+    } catch (err) {
+      console.log("Error in executing statements.Caused by " + err);
+      return { success: false, lastInsertRow: -1 };
     }
-
-    return { success: false, lastInsertRow: 0 };
   }
-
-  // async function getTableData(
-  //   tableName: string,
-  //   { ...conditions }: object
-  // ): Promise<Array<any>> {
-  //   console.log(conditions);
-  //   return await db.getAllAsync(
-  //     `SELECT * FROM ${tableName} JOIN word ON word.id = ${tableName}.word_id WHERE `
-  //   );
-  // }
 
   return { setup, clearAll, getAllTables, loading, insertData };
 };

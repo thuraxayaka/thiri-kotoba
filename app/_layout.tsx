@@ -38,12 +38,15 @@ const migrateDb = async (db: SQLiteDatabase) => {
     // Run migrations if needed
     if (currentDbVersion === 0) {
       // Initial migration
-
+      await db.execAsync(`CREATE TABLE IF NOT EXISTS category(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category VARCHAR(25) UNIQUE NOT NULL);
+      `);
+      console.log("created category table...");
       await db.execAsync(`CREATE TABLE IF NOT EXISTS japanese_word (
       id INTEGER PRIMARY KEY  AUTOINCREMENT,
       word TEXT NOT NULL,
       parts_of_speech TEXT NOT NULL,
-      categories TEXT NOT NULL,
       english TEXT NOT NULL,
       burmese TEXT NOT NULL,
       definition TEXT,
@@ -74,7 +77,6 @@ const migrateDb = async (db: SQLiteDatabase) => {
         id INTEGER PRIMARY KEY  AUTOINCREMENT,
         word TEXT NOT NULL,
         parts_of_speech TEXT NOT NULL,
-        categories TEXT NOT NULL,
         english TEXT NOT NULL,
         burmese TEXT NOT NULL,
         definition TEXT,
@@ -103,7 +105,6 @@ const migrateDb = async (db: SQLiteDatabase) => {
           id INTEGER PRIMARY KEY  AUTOINCREMENT,
           word TEXT NOT NULL,
           parts_of_speech TEXT NOT NULL,
-          categories TEXT NOT NULL,
           english TEXT NOT NULL,
           burmese TEXT NOT NULL,
           definition TEXT,
@@ -127,6 +128,16 @@ const migrateDb = async (db: SQLiteDatabase) => {
         translation TEXT NOT NULL,
         FOREIGN KEY (word_id) REFERENCES korean_word(id) ON DELETE CASCADE
         );`);
+      await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS word_category(
+          word_id INT NOT NULL,
+          language TEXT NOT NULL,
+          category_id INT NOT NULL,
+          PRIMARY KEY (word_id, language, category_id),
+          FOREIGN KEY (category_id) REFERENCES category(id)
+          )`);
+
+      console.log("created word category...");
     }
 
     // Increment the version after migration

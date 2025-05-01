@@ -44,7 +44,7 @@ const DrawerContents = () => {
           </View>
         </Link>
         <Separator />
-        <Link href="/categories/specific/">
+        <Link href="/categories">
           <View className="flex-row items-center gap-2  px-4 py-4">
             <Feather name="pie-chart" size={20} color="black" />
             <Text>Categories</Text>

@@ -97,12 +97,12 @@ const WordDetails = ({
               )}
             </View>
             <View className="flex-row gap-1">
-              {formality === "neutral" && (
-                <Text className="rounded-md bg-rose-200 px-1 text-xs">
+              {
+                <Text className="rounded-md bg-rose-200 py-1 px-1 text-xs">
                   {formality}
                 </Text>
-              )}
-              <Text className="rounded-md bg-rose-200 px-1 text-xs">
+              }
+              <Text className="rounded-md bg-rose-200  py-1 px-1 text-xs">
                 {level}
               </Text>
             </View>
@@ -114,7 +114,7 @@ const WordDetails = ({
                 <View className="flex-row items-center" key={i}>
                   <TouchableOpacity
                     onPress={() => {
-                      router.push("/categories");
+                      router.push(`/categories/${tag}`);
                     }}
                   >
                     <Text
